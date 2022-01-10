@@ -1,5 +1,5 @@
 # cpe357_winter2022
 
-Cal Poly, SLO \n
-CPE357, Winter 2022 \n
+Cal Poly, SLO\
+CPE357, Winter 2022\
 labs and projects in C
