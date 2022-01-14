@@ -12,44 +12,42 @@ struct node *head = NULL;
 
 int push_string(char *string){
     struct node *node = malloc(sizeof(struct node));
+    if(node == NULL){
+        return 0;
+    }
     if(head == NULL){
-        printf("here1 \n");
         strcpy(node->text, string);
         node->next = NULL;
+        node->prev = NULL;
         head = node;
     }
     else{
-        //struct node *next = malloc(sizeof(struct node));
-        //node = head->next;
-        //node->prev = head;
-        struct node *ptr = head;
-        printf("here2 \n");
-        while(ptr != NULL){
-            printf("here3 \n");
-            ptr = ptr->next;
+        strcpy(node->text, string);
+        node->next = NULL;
+        struct node **ptr;
+        *ptr = head;
+        while((*ptr)->next != NULL){
+            *ptr = (*ptr)->next;
         }
-        if(ptr == NULL){
-            printf("here4 \n");
-            strcpy(node->text, string);
-            printf("here5 \n");
-            node->next = NULL;
-            printf("here6 \n");
-            ptr = node;
-        }
+        node->prev = *ptr;
+        (*ptr)->next = node;
     }
 
-    free(node);
     return 0;
 }
 
 int print_list(){
-    printf("here\n");
-    struct node *ptr = head;
-    while(ptr != NULL){
-        printf("here1\n");
-        printf("%s \n", ptr->text);
-        ptr = ptr->next;
+    struct node *node = malloc(sizeof(struct node));
+    if(head == NULL){
+        return 0;
     }
+    struct node **ptr;
+    *ptr = head;
+    while((*ptr) != NULL){
+        printf("%s \n", (*ptr)->text);
+        *ptr = (*ptr)->next;
+    }
+
     return 0;
 }
 
@@ -60,12 +58,14 @@ int main(){
     if(sel == 1){
         printf("insert text \n");
         char string[SIZE];
-        scanf("%s", &string);
+        scanf("%s", string);
         push_string(string);
+        printf("\n");
         main();
     }
     else if(sel == 2){
         print_list();
+        printf("\n");
         main();
     }
 
