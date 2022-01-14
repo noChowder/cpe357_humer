@@ -9,6 +9,16 @@ struct node{
     char text[SIZE];
 };
 struct node *head = NULL;
+struct node *last = NULL;
+
+struct node * get_last(){
+    struct node *temp = head;
+    while(temp->next != NULL){
+        temp = temp->next;
+    }
+    last = temp;
+    return last;
+}
 
 int push_string(char *string){
     struct node *node = malloc(sizeof(struct node));
@@ -17,12 +27,15 @@ int push_string(char *string){
     }
     if(head == NULL){
         strcpy(node->text, string);
-        node->next = NULL;
+        node->next = last;
         node->prev = NULL;
         head = node;
+        node->next = NULL;
+        node->prev = head;
+        last = node;
     }
     else{
-        strcpy(node->text, string);
+        /*strcpy(node->text, string);
         node->next = NULL;
         struct node **ptr;
         *ptr = head;
@@ -30,23 +43,28 @@ int push_string(char *string){
             *ptr = (*ptr)->next;
         }
         node->prev = *ptr;
-        (*ptr)->next = node;
+        (*ptr)->next = node;*/
+        last = get_last();
+        strcpy(node->text, string);
+        node->next = NULL;
+        node->prev = last;
+        last->next = node;
     }
 
     return 0;
 }
 
 int print_list(){
-    struct node *node = malloc(sizeof(struct node));
+    struct node *temp = head;
     if(head == NULL){
         return 0;
     }
-    struct node **ptr;
-    *ptr = head;
-    while((*ptr) != NULL){
-        printf("%s \n", (*ptr)->text);
-        *ptr = (*ptr)->next;
+    last = get_last();
+    while(temp != last){
+        printf("%s \n", temp->text);
+        temp = temp->next;
     }
+    printf("%s \n", temp->text);
 
     return 0;
 }

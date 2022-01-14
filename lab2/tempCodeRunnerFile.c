@@ -1,1 +1,1 @@
-node->next = next;
+head
