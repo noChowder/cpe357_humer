@@ -42,7 +42,7 @@ int push_string(char *string){
         last->next = node;
     }
 
-    free(node);
+    //free(node);
     return 0;
 }
 
@@ -58,6 +58,18 @@ int print_list(){
     }
     printf("%s \n", temp->text);
 
+    return 0;
+}
+
+int end_program(){
+    if(head == NULL){
+        return 0;
+    }
+    while(head->next){
+        head = head->next;
+        free(head->prev);
+    }
+    free(last);
     return 0;
 }
 
@@ -77,6 +89,13 @@ int main(){
         print_list();
         printf("\n");
         main();
+    }
+    else if(sel == 3){
+        main();
+    }
+    else if(sel == 4){
+        end_program();
+        return 0;
     }
 
     //free(node);
