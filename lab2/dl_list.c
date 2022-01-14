@@ -35,15 +35,6 @@ int push_string(char *string){
         last = node;
     }
     else{
-        /*strcpy(node->text, string);
-        node->next = NULL;
-        struct node **ptr;
-        *ptr = head;
-        while((*ptr)->next != NULL){
-            *ptr = (*ptr)->next;
-        }
-        node->prev = *ptr;
-        (*ptr)->next = node;*/
         last = get_last();
         strcpy(node->text, string);
         node->next = NULL;
@@ -51,6 +42,7 @@ int push_string(char *string){
         last->next = node;
     }
 
+    free(node);
     return 0;
 }
 
