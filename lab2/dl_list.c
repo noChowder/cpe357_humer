@@ -78,12 +78,12 @@ int delete_item(int item){
         }
         return 0;
     }
+    int total;
     while(temp->next != NULL){
         temp = temp->next;
-        i++;
+        total++;
     }
-    printf("%d\n", i);
-    if(i < item){
+    if(total < item){
         printf("item does not exist \n");
         return 0;
     }
