@@ -161,8 +161,7 @@ int main(){
         main();
     }
     else if(sel == 4){
-        end_program();
-        return 0;
+        return end_program();
     }
     else{
         printf("\n");
