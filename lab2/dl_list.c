@@ -116,6 +116,12 @@ int end_program(){
     if(head == NULL){
         return 0;
     }
+    last = get_last();
+    if(head->next == last){
+        free(head);
+        free(last);
+        return 0;
+    }
     while(head->next){
         head = head->next;
         free(head->prev);
@@ -126,8 +132,13 @@ int end_program(){
 
 int main(){
     printf("Select: \n1 push string \n2 print list \n3 delete item \n4 end program \n");
-    int sel;
-    scanf("%d", &sel);
+    int sel = 0;
+    int check = scanf("%d", &sel);
+    if(!check){
+        fprintf(stderr, "invalid input \n");
+        end_program();
+        return -1;
+    }
     if(sel == 1){
         printf("insert text: \n");
         char string[SIZE];
@@ -152,6 +163,10 @@ int main(){
     else if(sel == 4){
         end_program();
         return 0;
+    }
+    else{
+        printf("\n");
+        main();
     }
 
     return 0;
