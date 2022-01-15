@@ -135,7 +135,7 @@ int main(){
     int sel = 0;
     int check = scanf("%d", &sel);
     if(!check){
-        fprintf(stderr, "invalid input \n");
+        fprintf(stderr, "invalid input: terminating program \n");
         end_program();
         return -1;
     }
