@@ -61,6 +61,57 @@ int print_list(){
     return 0;
 }
 
+int delete_item(int item){
+    int i = 1;
+    struct node *temp = head;
+    if(head == NULL){
+        return 0;
+    }
+    if(item == 1){
+        if(head->next == NULL){
+            head = NULL;
+            last = NULL;   
+        }
+        else if(head->next != NULL){
+            head = head->next;
+            head->prev = NULL;
+        }
+        return 0;
+    }
+    while(temp->next != NULL){
+        temp = temp->next;
+        i++;
+    }
+    printf("%d\n", i);
+    if(i < item){
+        printf("item does not exist \n");
+        return 0;
+    }
+    
+    i = 1;
+    temp = head;
+    while(i <= item){
+        i++;
+        temp = temp->next;
+        if(i == item){
+            if(temp->next == NULL){
+                temp->prev->next = NULL;
+                free(temp);
+                return 0;
+            }
+            temp->prev->next = temp->next;
+            temp->next->prev = temp->prev;
+            free(temp);
+            return 0;
+        }
+        if(i > item){
+            printf("item does not exist \n");
+            return 0;
+        }
+    }
+    return 0;
+}
+
 int end_program(){
     if(head == NULL){
         return 0;
@@ -78,7 +129,7 @@ int main(){
     int sel;
     scanf("%d", &sel);
     if(sel == 1){
-        printf("insert text \n");
+        printf("insert text: \n");
         char string[SIZE];
         scanf("%s", string);
         push_string(string);
@@ -91,6 +142,11 @@ int main(){
         main();
     }
     else if(sel == 3){
+        printf("select item to delete: \n");
+        int item;
+        scanf("%d", &item);
+        delete_item(item);
+        printf("\n");
         main();
     }
     else if(sel == 4){
@@ -98,6 +154,5 @@ int main(){
         return 0;
     }
 
-    //free(node);
     return 0;
 }
