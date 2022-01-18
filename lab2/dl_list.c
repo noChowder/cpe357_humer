@@ -78,7 +78,7 @@ int delete_item(int item){
         }
         return 0;
     }
-    int total;
+    int total = 0;
     while(temp->next != NULL){
         temp = temp->next;
         total++;
