@@ -35,7 +35,7 @@ int main(int argc, char *argv[]){
 
     im1 = fopen("lion.bmp", "rb");
     fread(&bmpFileHeader, sizeof(BITMAPFILEHEADER), 1, im1);
-    if(bmpFileHeader.bfType != 0x4D42){
+    if(bmpFileHeader.bfType != 0x4D42){ // check if bmp file type
         fclose(im1);
         return -1;
     }
