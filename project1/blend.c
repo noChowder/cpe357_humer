@@ -2,20 +2,20 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef unsigned char byte;
 typedef unsigned short WORD;
 typedef unsigned int DWORD;
 typedef unsigned int LONG;
+typedef unsigned char BYTE;
 
-struct tagBITMAPFILEHEADER{
+typedef struct tagBITMAPFILEHEADER{
     WORD bfType;  //specifies the file type 
     DWORD bfSize;  //specifies the size in bytes of the bitmap file 
     WORD bfReserved1;  //reserved; must be 0 
     WORD bfReserved2;  //reserved; must be 0 
     DWORD bfOffBits;  //species the offset in bytes from the bitmapfileheader to the bitmap bits 
-}typedef BITMAPFILEHEADER;
+}BITMAPFILEHEADER;
 
-struct tagBITMAPINFOHEADER{ 
+typedef struct tagBITMAPINFOHEADER{ 
     DWORD biSize;  //specifies the number of bytes required by the struct 
     LONG biWidth;  //specifies width in pixels 
     LONG biHeight;  //species height in pixels 
@@ -27,23 +27,63 @@ struct tagBITMAPINFOHEADER{
     LONG biYPelsPerMeter;  //number of pixels per meter in y axis 
     DWORD biClrUsed;  //number of colors used by the bitmap 
     DWORD biClrImportant;  //number of colors that are important 
-}typedef BITMAPINFOHEADER; 
+}BITMAPINFOHEADER; 
 
 int main(int argc, char *argv[]){
-    FILE *im1;
+    FILE *im1, *test;
     BITMAPFILEHEADER bmpFileHeader;
-    size_t fileSize = sizeof(BITMAPFILEHEADER);
+    BITMAPINFOHEADER bmpInfoHeader;
 
     im1 = fopen("lion.bmp", "rb");
-    fread(&bmpFileHeader, fileSize, 1, im1);
+    if(im1 == NULL){
+        return -1;
+    }
+    test = fopen("test.bmp", "wb");
+    if(test == NULL){
+        return -1;
+    }
+
+    /* read file header */
+    fread(&(bmpFileHeader.bfType), sizeof(WORD), 1, im1);
+    fread(&(bmpFileHeader.bfSize), sizeof(DWORD), 1, im1);
+    fread(&(bmpFileHeader.bfReserved1), sizeof(WORD), 1, im1);
+    fread(&(bmpFileHeader.bfReserved2), sizeof(WORD), 1, im1);
+    fread(&(bmpFileHeader.bfOffBits), sizeof(DWORD), 1, im1);
+
     if(bmpFileHeader.bfType != 0x4D42){ // check if bmp file type
+        printf("Not a bmp file. \n");
         fclose(im1);
         return -1;
     }
-    printf("%X \n", bmpFileHeader.bfType);
-    printf("%X \n", bmpFileHeader.bfSize);
-    printf("%x \n", bmpFileHeader.bfOffBits);
 
+    /* read info header */
+    fread(&(bmpInfoHeader.biSize), sizeof(DWORD), 1, im1);
+    fread(&(bmpInfoHeader.biWidth), sizeof(LONG), 1, im1);
+    fread(&(bmpInfoHeader.biHeight), sizeof(LONG), 1, im1);
+    fread(&(bmpInfoHeader.biPlanes), sizeof(WORD), 1, im1);
+    fread(&(bmpInfoHeader.biBitCount), sizeof(WORD), 1, im1);
+    fread(&(bmpInfoHeader.biCompression), sizeof(DWORD), 1, im1);
+    fread(&(bmpInfoHeader.biSizeImage), sizeof(DWORD), 1, im1);
+    fread(&(bmpInfoHeader.biXPelsPerMeter), sizeof(LONG), 1, im1);
+    fread(&(bmpInfoHeader.biYPelsPerMeter), sizeof(LONG), 1, im1);
+    fread(&(bmpInfoHeader.biClrUsed), sizeof(DWORD), 1, im1);
+    fread(&(bmpInfoHeader.biClrImportant), sizeof(DWORD), 1, im1);
+
+    /* move ptr by offset */
+    int *offset;
+    fread(offset, bmpFileHeader.bfOffBits, 1, im1);
+    printf("offset: %d \n", *offset);
+
+    /* read pixel data */
+    BYTE arr[bmpInfoHeader.biSizeImage];
+    
+
+    /* allocate image mem */
+
+    fwrite(&bmpFileHeader, sizeof(BITMAPFILEHEADER), 1, test);
+    fwrite(&bmpInfoHeader, sizeof(BITMAPINFOHEADER), 1, test);
+    
     fclose(im1);
+    fclose(test);
     return 0;
 }
