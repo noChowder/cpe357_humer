@@ -32,15 +32,17 @@ struct tagBITMAPINFOHEADER{
 int main(int argc, char *argv[]){
     FILE *im1;
     BITMAPFILEHEADER bmpFileHeader;
+    size_t fileSize = sizeof(BITMAPFILEHEADER);
 
     im1 = fopen("lion.bmp", "rb");
-    fread(&bmpFileHeader, sizeof(BITMAPFILEHEADER), 1, im1);
+    fread(&bmpFileHeader, fileSize, 1, im1);
     if(bmpFileHeader.bfType != 0x4D42){ // check if bmp file type
         fclose(im1);
         return -1;
     }
     printf("%X \n", bmpFileHeader.bfType);
     printf("%X \n", bmpFileHeader.bfSize);
+    printf("%x \n", bmpFileHeader.bfOffBits);
 
     fclose(im1);
     return 0;
