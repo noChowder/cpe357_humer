@@ -25,7 +25,7 @@ struct tagBITMAPINFOHEADER{
     DWORD biSizeImage;  //size of image in bytes 
     LONG biXPelsPerMeter;  //number of pixels per meter in x axis 
     LONG biYPelsPerMeter;  //number of pixels per meter in y axis 
-    DWORD biClrUsed;  //number of colors used by th ebitmap 
+    DWORD biClrUsed;  //number of colors used by the bitmap 
     DWORD biClrImportant;  //number of colors that are important 
 }typedef BITMAPINFOHEADER; 
 
