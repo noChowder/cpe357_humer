@@ -30,19 +30,18 @@ struct tagBITMAPINFOHEADER{
 }typedef BITMAPINFOHEADER; 
 
 int main(int argc, char *argv[]){
-    FILE *im1, *im2, *test;
+    FILE *im1;
     BITMAPFILEHEADER bmpFileHeader;
 
     im1 = fopen("lion.bmp", "rb");
-    test = fopen("test.txt", "w");
     fread(&bmpFileHeader, sizeof(BITMAPFILEHEADER), 1, im1);
     if(bmpFileHeader.bfType != 0x4D42){
-        printf("here\n");
+        fclose(im1);
+        return -1;
     }
     printf("%X \n", bmpFileHeader.bfType);
     printf("%X \n", bmpFileHeader.bfSize);
 
     fclose(im1);
-    fclose(test);
     return 0;
 }
