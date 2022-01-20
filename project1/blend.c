@@ -98,8 +98,21 @@ int main(int argc, char *argv[]){
     }
 
     /* read pixel data */
+    size_t height = bmpInfoHeader.biHeight;
+    size_t width = 0;
+    if((bmpInfoHeader.biWidth * 3 % 4) != 0){
+        width = (bmpInfoHeader.biWidth * 3) + ((1 - bmpInfoHeader.biWidth * 3 % 4 / 4.0) * 4);
+    }
+    else{
+        width = bmpInfoHeader.biWidth * 3;
+    }
+    size_t imageSize = width * height;
+    printf("%zu \n", imageSize);
+    printf("%d \n", bmpInfoHeader.biSizeImage);
+    printf("%d \n", bmpFileHeader.bfSize);
+
     BYTE *pixelArray;
-    pixelArray = malloc(sizeof(BYTE)*bmpInfoHeader.biSizeImage);
+    pixelArray = (BYTE *)malloc(imageSize);
     if(pixelArray == NULL){
         printf("Cannot allocate memory for pixelArray. \n");
         return -1;
