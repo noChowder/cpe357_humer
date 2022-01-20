@@ -29,7 +29,7 @@ typedef struct {
 #pragma pack(pop)
 
 int main(char* input, char *output) {
-    input = "wolf.bmp";
+    input = "lion.bmp";
     output = "test.bmp";
 
     //variable dec:
@@ -82,6 +82,12 @@ int main(char* input, char *output) {
     if(n<1){
         //cleanup
     }
+
+    printf("%d \n", hp->fileheader.dataoffset);
+    printf("%d \n", hp->bitmapsize);
+    printf("%ld \n", sizeof(hp->fileheader));
+    printf("%ld \n", sizeof(hp->headersize));
+    printf("%ld \n", sizeof(bitmap_header));
 
     fclose(fp);
     fclose(out);

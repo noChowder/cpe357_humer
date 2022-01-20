@@ -27,73 +27,90 @@ typedef struct tagBITMAPINFOHEADER{
     LONG biYPelsPerMeter;  //number of pixels per meter in y axis 
     DWORD biClrUsed;  //number of colors used by the bitmap 
     DWORD biClrImportant;  //number of colors that are important 
-}BITMAPINFOHEADER; 
+}BITMAPINFOHEADER;
 
-int main(int argc, char *argv[]){
-    FILE *im1, *test;
-    BITMAPFILEHEADER *bmpFileHeader;
-    BITMAPINFOHEADER *bmpInfoHeader;
+int read_headers(BITMAPFILEHEADER *fh, BITMAPINFOHEADER *ih, char *fileName){
+    FILE *fp;
 
-    bmpFileHeader = (BITMAPFILEHEADER *)malloc(sizeof(BITMAPFILEHEADER));
-    bmpInfoHeader = (BITMAPINFOHEADER *)malloc(sizeof(BITMAPINFOHEADER));
-
-    im1 = fopen("lion.bmp", "rb");
-    if(im1 == NULL){
-        printf("Cannot read file 1. \n");
+    fp = fopen(fileName, "rb");
+    if(fp == NULL){
+        printf("Cannot read file %s. \n", fileName);
         return -1;
     }
+
+    /* read file header */
+    fread(&fh->bfType, sizeof(WORD), 1, fp);
+    fread(&fh->bfSize, sizeof(DWORD), 1, fp);
+    fread(&fh->bfReserved1, sizeof(WORD), 1, fp);
+    fread(&fh->bfReserved2, sizeof(WORD), 1, fp);
+    fread(&fh->bfOffBits, sizeof(DWORD), 1, fp);
+
+    if(fh->bfType != 0x4D42){ // check if bmp file type
+        printf("Not a bmp file. \n");
+        fclose(fp);
+        return -1;
+    }
+
+    /* read info header */
+    fread(&ih->biSize, sizeof(DWORD), 1, fp);
+    fread(&ih->biWidth, sizeof(LONG), 1, fp);
+    fread(&ih->biHeight, sizeof(LONG), 1, fp);
+    fread(&ih->biPlanes, sizeof(WORD), 1, fp);
+    fread(&ih->biBitCount, sizeof(WORD), 1, fp);
+    fread(&ih->biCompression, sizeof(DWORD), 1, fp);
+    fread(&ih->biSizeImage, sizeof(DWORD), 1, fp);
+    fread(&ih->biXPelsPerMeter, sizeof(LONG), 1, fp);
+    fread(&ih->biYPelsPerMeter, sizeof(LONG), 1, fp);
+    fread(&ih->biClrUsed, sizeof(DWORD), 1, fp);
+    fread(&ih->biClrImportant, sizeof(DWORD), 1, fp);
+
+    fclose(fp);
+    return 0;
+}
+
+BYTE *get_color(BITMAPFILEHEADER *fh, BITMAPINFOHEADER *ih, char *fileName){
+    FILE *fp;
+
+    fp = fopen(fileName, "rb");
+    if(fp == NULL){
+        printf("Cannot read file %s. \n", fileName);
+        return NULL;
+    }
+    //fseek(fp, fh->bfOffBits, SEEK_SET);
+    BYTE *imageData = (BYTE *)malloc(ih->biSizeImage);
+    fread(imageData, ih->biSizeImage, 1, fp);
+
+    fclose(fp);
+    return imageData;
+}
+
+int main(int argc, char *argv[]){
+    char *im1 = "flowers.bmp";
+    //char *test = "test.bmp";
+    BITMAPFILEHEADER bmpFileHeader;
+    BITMAPINFOHEADER bmpInfoHeader;
+
+    int check = read_headers(&bmpFileHeader, &bmpInfoHeader, im1);
+    if(check){
+        return -1;
+    }
+
+    FILE *test;
     test = fopen("test.bmp", "wb");
     if(test == NULL){
         printf("Cannot write to file. \n");
         return -1;
     }
 
-    /* read file header */
-    fread(&bmpFileHeader->bfType, sizeof(WORD), 1, im1);
-    fread(&bmpFileHeader->bfSize, sizeof(DWORD), 1, im1);
-    fread(&bmpFileHeader->bfReserved1, sizeof(WORD), 1, im1);
-    fread(&bmpFileHeader->bfReserved2, sizeof(WORD), 1, im1);
-    fread(&bmpFileHeader->bfOffBits, sizeof(DWORD), 1, im1);
-
-    if(bmpFileHeader->bfType != 0x4D42){ // check if bmp file type
-        printf("Not a bmp file. \n");
-        fclose(im1);
-        return -1;
-    }
-
-    /* read info header */
-    fread(&bmpInfoHeader->biSize, sizeof(DWORD), 1, im1);
-    fread(&bmpInfoHeader->biWidth, sizeof(LONG), 1, im1);
-    fread(&bmpInfoHeader->biHeight, sizeof(LONG), 1, im1);
-    fread(&bmpInfoHeader->biPlanes, sizeof(WORD), 1, im1);
-    fread(&bmpInfoHeader->biBitCount, sizeof(WORD), 1, im1);
-    fread(&bmpInfoHeader->biCompression, sizeof(DWORD), 1, im1);
-    fread(&bmpInfoHeader->biSizeImage, sizeof(DWORD), 1, im1);
-    fread(&bmpInfoHeader->biXPelsPerMeter, sizeof(LONG), 1, im1);
-    fread(&bmpInfoHeader->biYPelsPerMeter, sizeof(LONG), 1, im1);
-    fread(&bmpInfoHeader->biClrUsed, sizeof(DWORD), 1, im1);
-    fread(&bmpInfoHeader->biClrImportant, sizeof(DWORD), 1, im1);
-
     /* read pixel data */
-    BYTE *pixelArray;
-    pixelArray = malloc(sizeof(BYTE)*bmpInfoHeader->biSizeImage);
-    if(pixelArray == NULL){
-        printf("Cannot allocate memory for pixelArray. \n");
-        return -1;
-    }
+    BYTE *pixelArray = get_color(&bmpFileHeader, &bmpInfoHeader, im1);
 
-    fseek(im1, sizeof(BYTE)*bmpFileHeader->bfOffBits, SEEK_SET);
-    fread(pixelArray, sizeof(BYTE), bmpInfoHeader->biSizeImage, im1);
-
-    fwrite(bmpFileHeader, 14, 1, test);
-    fwrite(bmpInfoHeader, bmpInfoHeader->biSize, 1, test);
-    fseek(test, sizeof(BYTE)*bmpFileHeader->bfOffBits, SEEK_SET);
-    fwrite(pixelArray, sizeof(BYTE), bmpInfoHeader->biSizeImage, test);
+    //fwrite(&bmpFileHeader, 14, 1, test);
+    //fwrite(&bmpInfoHeader, sizeof(bmpInfoHeader), 1, test);
+    //fseek(test, bmpFileHeader.bfOffBits, SEEK_SET);
+    fwrite(pixelArray, bmpInfoHeader.biSizeImage, 1, test);
     
-    fclose(im1);
     fclose(test);
     free(pixelArray);
-    free(bmpFileHeader);
-    free(bmpInfoHeader);
     return 0;
 }
