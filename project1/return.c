@@ -1,52 +1,32 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-typedef unsigned short WORD;
-typedef unsigned int DWORD;
-typedef unsigned int LONG;
-
-typedef struct tagBITMAPFILEHEADER{
-    char bfType;    
-    unsigned int bfSize; 
-    short bfReserved1; 
-    short bfReserved2; 
-    unsigned int bfOffBits;
-}BITMAPFILEHEADER;
-
-typedef struct tagBITMAPINFOHEADER{ 
-    DWORD biSize;  //specifies the number of bytes required by the struct 
-    LONG biWidth;  //specifies width in pixels 
-    LONG biHeight;  //species height in pixels 
-    WORD biPlanes; //specifies the number of color planes, must be 1 
-    WORD biBitCount; //specifies the number of bit per pixel 
-    DWORD biCompression;//spcifies the type of compression 
-    DWORD biSizeImage;  //size of image in bytes 
-    LONG biXPelsPerMeter;  //number of pixels per meter in x axis 
-    LONG biYPelsPerMeter;  //number of pixels per meter in y axis 
-    DWORD biClrUsed;  //number of colors used by the bitmap 
-    DWORD biClrImportant;  //number of colors that are important 
-}BITMAPINFOHEADER;
-
-typedef struct{
-    char bfType[2];
-    unsigned int bfSize;
-    short bfReserved1;
-    short bfReserved2;
-    unsigned int bfOffBits;
-} mystruct;
-
-#pragma pack(push, 1)
-typedef struct {
-    char         filetype[2];   /* magic - always 'B' 'M' */
-    unsigned int filesize;
-    short        reserved1;
-    short        reserved2;
-    unsigned int dataoffset;    /* offset in bytes to actual bitmap data */
-} file_header;
 
 int main(){
-    printf("%ld \n", sizeof(BITMAPFILEHEADER));
-    printf("%ld \n", sizeof(mystruct));
-    printf("%ld \n", sizeof(file_header));
+    float x = 3.3;
+    float y = 5.8;
+    int x1, x2, y1, y2;
+    float dx, dy;
+    
+    x1 = x / 1;
+    if(x1 < x){
+        x2 = x1 + 1;
+    }
+    else{
+        x2 = x1;
+    }
+    dx = x - x1;
+
+    printf("%d, %d, %f \n", x1, x2, dx);
+
+    y1 = y / 1;
+    if(y1 < y){
+        y2 = y1 + 1;
+    }
+    else{
+        y2 = y1;
+    }
+    dy = y - y1;
+
+    printf("%d, %d, %f \n", y1, y2, dy);
+
+    return 0;
 }
