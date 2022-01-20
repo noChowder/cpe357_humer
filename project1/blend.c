@@ -34,12 +34,14 @@ int main(int argc, char *argv[]){
     BITMAPFILEHEADER bmpFileHeader;
     BITMAPINFOHEADER bmpInfoHeader;
 
-    im1 = fopen("lion.bmp", "rb");
+    im1 = fopen("flowers.bmp", "rb");
     if(im1 == NULL){
+        printf("Cannot open file 1. \n");
         return -1;
     }
     test = fopen("test.bmp", "wb");
     if(test == NULL){
+        printf("Cannot open file 3. \n");
         return -1;
     }
 
@@ -75,10 +77,16 @@ int main(int argc, char *argv[]){
     printf("offset: %d \n", *offset);
 
     /* read pixel data */
-    BYTE arr[bmpInfoHeader.biSizeImage];
-    
+    LONG width = (bmpInfoHeader.biWidth * 3) + ((1 - bmpInfoHeader.biWidth * 3 % 4 / 4.0)) * 4;
+    LONG height = bmpInfoHeader.biHeight;
+    LONG imageSize = width * height;
+    BYTE *pixelArray;
+    pixelArray = malloc(imageSize);
+    if(pixelArray == NULL){
+        printf("No memory allocated. \n");
+        return -1;
+    }
 
-    /* allocate image mem */
 
     fwrite(&bmpFileHeader, sizeof(BITMAPFILEHEADER), 1, test);
     fwrite(&bmpInfoHeader, sizeof(BITMAPINFOHEADER), 1, test);
