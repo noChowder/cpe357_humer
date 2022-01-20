@@ -34,14 +34,17 @@ int main(int argc, char *argv[]){
     BITMAPFILEHEADER bmpFileHeader;
     BITMAPINFOHEADER bmpInfoHeader;
 
-    im1 = fopen("flowers.bmp", "rb");
+    //bmpFileHeader = malloc(sizeof(BITMAPFILEHEADER));
+    //bmpInfoHeader = malloc(sizeof(BITMAPINFOHEADER));
+
+    im1 = fopen("lion.bmp", "rb");
     if(im1 == NULL){
-        printf("Cannot open file 1. \n");
+        printf("Cannot read file 1. \n");
         return -1;
     }
     test = fopen("test.bmp", "wb");
     if(test == NULL){
-        printf("Cannot open file 3. \n");
+        printf("Cannot write to file. \n");
         return -1;
     }
 
@@ -71,27 +74,33 @@ int main(int argc, char *argv[]){
     fread(&(bmpInfoHeader.biClrUsed), sizeof(DWORD), 1, im1);
     fread(&(bmpInfoHeader.biClrImportant), sizeof(DWORD), 1, im1);
 
-    /* move ptr by offset */
-    int *offset;
-    fread(offset, bmpFileHeader.bfOffBits, 1, im1);
-    printf("offset: %d \n", *offset);
-
     /* read pixel data */
-    LONG width = (bmpInfoHeader.biWidth * 3) + ((1 - bmpInfoHeader.biWidth * 3 % 4 / 4.0)) * 4;
-    LONG height = bmpInfoHeader.biHeight;
-    LONG imageSize = width * height;
     BYTE *pixelArray;
-    pixelArray = malloc(imageSize);
+    pixelArray = malloc(sizeof(BYTE)*bmpInfoHeader.biSizeImage);
     if(pixelArray == NULL){
-        printf("No memory allocated. \n");
+        printf("Cannot allocate memory for pixelArray. \n");
         return -1;
     }
 
+    /*
+    for(int x = 0; x < width; x++){
+        for(int y = 0; y < height; y++){
+            for(int i = 0; i < 3; i++){
+                pixelArray[x] = i;
+            }
+        }
+    }*/
+
+    fseek(im1, sizeof(BYTE)*bmpFileHeader.bfOffBits, SEEK_SET);
+    fread(pixelArray, sizeof(BYTE)*bmpInfoHeader.biSizeImage, 1, im1);
 
     fwrite(&bmpFileHeader, sizeof(BITMAPFILEHEADER), 1, test);
     fwrite(&bmpInfoHeader, sizeof(BITMAPINFOHEADER), 1, test);
+    fseek(test, sizeof(BYTE)*bmpFileHeader.bfOffBits, SEEK_SET);
+    fwrite(pixelArray, sizeof(BYTE)*bmpInfoHeader.biSizeImage, 1, test);
     
     fclose(im1);
     fclose(test);
+    free(pixelArray);
     return 0;
 }
