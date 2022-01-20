@@ -80,22 +80,24 @@ BYTE *get_image(BITMAPFILEHEADER *fh, BITMAPINFOHEADER *ih, char *fileName){
 
     size_t height = abs(ih->biHeight);
     size_t width = ih->biWidth;
-    size_t imageSize = 3 * width * height;
+    size_t padding = (24 * width + 31) / 32 * 4;
+    size_t imageSize = padding * height;
     BYTE *imageData;
     imageData = (BYTE *)malloc(imageSize);
     if(imageData == NULL){
         printf("Cannot allocate memory for image data. \n");
         return NULL;
     }
-
+    fread(imageData, imageSize, 1, fp);
+    /*
     for(int y = 0; y < height; y++){
         for(int x = 0; x < width; x++){
             size_t pos = 3 * width * y + 3 * x;
-            for(size_t k = 0; k < 3; k++){
-                imageData[pos + k] = fgetc(fp);
-            }
+            imageData[pos + 0] = fgetc(fp);
+            imageData[pos + 1] = fgetc(fp);
+            imageData[pos + 2] = fgetc(fp);
         }
-    }
+    }*/
 
     fclose(fp);
     return imageData;
@@ -103,18 +105,19 @@ BYTE *get_image(BITMAPFILEHEADER *fh, BITMAPINFOHEADER *ih, char *fileName){
 
 BYTE get_color(BYTE *imageData, BITMAPINFOHEADER *ih, int x, int y, char *s){
     BYTE color;
-    size_t rowBytes = (24 * ih->biWidth + 31) / 32 * 4;
+    size_t padding = (24 * ih->biWidth + 31) / 32 * 4;
+    size_t pos = padding * y + 3 * x;
 
     if(!strcmp(s, "b")){
-        color = imageData[x*3 + y*rowBytes + 0];
+        color = imageData[pos + 0];
         return color;
     }
     else if(!strcmp(s, "g")){
-        color = imageData[x*3 + y*rowBytes + 1];
+        color = imageData[pos + 1];
         return color;
     }
     else if(!strcmp(s, "r")){
-        color = imageData[x*3 + y*rowBytes + 2];
+        color = imageData[pos + 2];
         return color;
     }
 
@@ -179,35 +182,30 @@ BYTE get_color_bilinear(BYTE *imageData, BITMAPINFOHEADER *ih, float x, float y,
 }
 
 int main(int argc, char *argv[]){
-    char *im1 = "tunnel.bmp";
+    char *im1 = "lion.bmp";
     char *im2 = "lion.bmp";
-    double ratio = .7;
+    double ratio = .5;
     BITMAPFILEHEADER bmpFileHeader1;
     BITMAPINFOHEADER bmpInfoHeader1;
     BITMAPFILEHEADER bmpFileHeader2;
     BITMAPINFOHEADER bmpInfoHeader2;
     BITMAPFILEHEADER bmpFileHeaderData;
     BITMAPINFOHEADER bmpInfoHeaderData;
-    size_t imageSize = 0;
 
     /* read pixel headers image 1 */
     int check = read_headers(&bmpFileHeader1, &bmpInfoHeader1, im1);
     if(check){
         return -1;
     }
-    if(bmpInfoHeader1.biSizeImage > imageSize){
-        imageSize = bmpInfoHeader1.biSizeImage;
-        bmpFileHeaderData = bmpFileHeader1;
-        bmpInfoHeaderData = bmpInfoHeader1;
-    }
+    bmpFileHeaderData = bmpFileHeader1;
+    bmpInfoHeaderData = bmpInfoHeader1;
 
     /* read pixel headers image 2 */
     int check2 = read_headers(&bmpFileHeader2, &bmpInfoHeader2, im2);
     if(check2){
         return -1;
     }
-    if(bmpInfoHeader2.biSizeImage > imageSize){
-        imageSize = bmpInfoHeader2.biSizeImage;
+    if(bmpInfoHeader2.biWidth > bmpInfoHeader1.biWidth){
         bmpFileHeaderData = bmpFileHeader2;
         bmpInfoHeaderData = bmpInfoHeader2;
     }
@@ -232,17 +230,18 @@ int main(int argc, char *argv[]){
     fwrite(&bmpInfoHeaderData, bmpInfoHeaderData.biSize, 1, test);
 
     BYTE *blendedData;
+    size_t padding = (24 * bmpInfoHeaderData.biWidth + 31) / 32 * 4;
+    size_t imageSize = padding * abs(bmpInfoHeaderData.biHeight);
     blendedData = (BYTE *)malloc(imageSize);
     if(blendedData == NULL){
         printf("Cannot allocate memory for blended data. \n");
         return -1;
     }
-
     BYTE r1, g1, b1, r2, g2, b2;
-    size_t rowBytes = (24 * bmpInfoHeaderData.biWidth + 31) / 32 * 4;
+
     for(int y = 0; y < bmpInfoHeaderData.biHeight-1; y++){
-        for(int x = 0; x < bmpInfoHeaderData.biWidth-1; x++){
-            size_t pos = rowBytes * y + 3 * x;
+        for(int x = 0; x < bmpInfoHeaderData.biWidth; x++){
+            size_t pos = padding * y + 3 * x;
             float x1, y1, x2, y2;
             x1 = (float) bmpInfoHeader1.biWidth / bmpInfoHeaderData.biWidth * x;
             y1 = (float) bmpInfoHeader1.biHeight / bmpInfoHeaderData.biHeight * y;
