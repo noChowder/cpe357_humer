@@ -167,8 +167,8 @@ int main(int argc, char *argv[]){
     test = fopen("test.bmp", "rb");
     //printf("%x \n", bmpFileHeader.bfType);
     //printf("file size: %d \n", bmpFileHeader.bfSize);
-    printf("image size: %d \n", bmpInfoHeader.biSizeImage);
-    printf("offset: %d \n", bmpFileHeader.bfOffBits);
+    //printf("image size: %d \n", bmpInfoHeader.biSizeImage);
+    //printf("offset: %d \n", bmpFileHeader.bfOffBits);
     
     fclose(test);
     free(pixelArray1);
