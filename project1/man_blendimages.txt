@@ -1,0 +1,9 @@
+Name
+blendimages - combines pixel data of bitmap images
+
+Synopsis
+#include <stdio.h>
+#include <stdio.h>
+#include <string.h>
+
+int blendimages(char *file1, char *file2, double ratio, char *file3);

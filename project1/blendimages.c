@@ -34,7 +34,7 @@ int read_headers(BITMAPFILEHEADER *fh, BITMAPINFOHEADER *ih, char *fileName){
 
     fp = fopen(fileName, "rb");
     if(fp == NULL){
-        printf("Cannot read file %s. \n", fileName);
+        printf("Cannot read file, %s. \n", fileName);
         return -1;
     }
 
@@ -68,49 +68,259 @@ int read_headers(BITMAPFILEHEADER *fh, BITMAPINFOHEADER *ih, char *fileName){
     return 0;
 }
 
-BYTE *get_color(BITMAPFILEHEADER *fh, BITMAPINFOHEADER *ih, char *fileName){
+BYTE *get_image(BITMAPFILEHEADER *fh, BITMAPINFOHEADER *ih, char *fileName){
     FILE *fp;
 
     fp = fopen(fileName, "rb");
     if(fp == NULL){
-        printf("Cannot read file %s. \n", fileName);
+        printf("Cannot read file, %s. \n", fileName);
         return NULL;
     }
-    //fseek(fp, fh->bfOffBits, SEEK_SET);
-    BYTE *imageData = (BYTE *)malloc(ih->biSizeImage);
-    fread(imageData, ih->biSizeImage, 1, fp);
+    fseek(fp, fh->bfOffBits, SEEK_SET);
+
+    size_t height = abs(ih->biHeight);
+    size_t width = ih->biWidth;
+    size_t padding = (24 * width + 31) / 32 * 4;
+    size_t imageSize = padding * height;
+    BYTE *imageData;
+    imageData = (BYTE *)malloc(imageSize);
+    if(imageData == NULL){
+        printf("Cannot allocate memory for image data. \n");
+        return NULL;
+    }
+    fread(imageData, imageSize, 1, fp);
 
     fclose(fp);
     return imageData;
 }
 
+BYTE get_color(BYTE *imageData, BITMAPINFOHEADER *ih, int x, int y, char *s){
+    BYTE color;
+    size_t padding = (24 * ih->biWidth + 31) / 32 * 4;
+    size_t pos = padding * y + 3 * x;
+
+    if(!strcmp(s, "b")){
+        color = imageData[pos + 0];
+        return color;
+    }
+    else if(!strcmp(s, "g")){
+        color = imageData[pos + 1];
+        return color;
+    }
+    else if(!strcmp(s, "r")){
+        color = imageData[pos + 2];
+        return color;
+    }
+
+    printf("No color data. \n");
+    return -1;
+}
+
+BYTE get_color_bilinear(BYTE *imageData, BITMAPINFOHEADER *ih, float x, float y, char *s){
+    BYTE color;
+    int x1, x2, y1, y2;
+    float dx, dy;
+    x1 = x / 1;
+    if(x1 < x){
+        x2 = x1 + 1;
+    }
+    else{
+        x2 = x1;
+    }
+    dx = x - x1;
+    y1 = y / 1;
+    if(y1 < y){
+        y2 = y1 + 1;
+    }
+    else{
+        y2 = y1;
+    }
+    dy = y - y1;
+
+    if(!strcmp(s, "r")){
+        BYTE red_left_upper = get_color(imageData, ih, x1, y2, "r");
+        BYTE red_right_upper = get_color(imageData, ih, x2, y2, "r");
+        BYTE red_left_lower = get_color(imageData, ih, x1, y1, "r");
+        BYTE red_right_lower = get_color(imageData, ih, x2, y1, "r");
+        BYTE red_left = red_left_upper * (1 - dy) + red_left_lower * dy;
+        BYTE red_right = red_right_upper * (1 - dy) + red_right_lower * dy;
+        color = red_left * (1 - dx) + red_right * dx;
+        return color;
+    }
+    else if(!strcmp(s, "g")){
+        BYTE green_left_upper = get_color(imageData, ih, x1, y2, "g");
+        BYTE green_right_upper = get_color(imageData, ih, x2, y2, "g");
+        BYTE green_left_lower = get_color(imageData, ih, x1, y1, "g");
+        BYTE green_right_lower = get_color(imageData, ih, x2, y1, "g");
+        BYTE green_left = green_left_upper * (1 - dy) + green_left_lower * dy;
+        BYTE green_right = green_right_upper * (1 - dy) + green_right_lower * dy;
+        color = green_left * (1 - dx) + green_right * dx;
+        return color;
+    }
+    else if(!strcmp(s, "b")){
+        BYTE blue_left_upper = get_color(imageData, ih, x1, y2, "b");
+        BYTE blue_right_upper = get_color(imageData, ih, x2, y2, "b");
+        BYTE blue_left_lower = get_color(imageData, ih, x1, y1, "b");
+        BYTE blue_right_lower = get_color(imageData, ih, x2, y1, "b");
+        BYTE blue_left = blue_left_upper * (1 - dy) + blue_left_lower * dy;
+        BYTE blue_right = blue_right_upper * (1 - dy) + blue_right_lower * dy;
+        color = blue_left * (1 - dx) + blue_right * dx;
+        return color;
+    }
+
+    printf("No color data. \n");
+    return -1;
+}
+
+int arg_checker(int arglen, char *file1, char *file2, double ratio, char *outfile){
+    if(arglen < 5){
+        printf("Too little arguments. \n");
+        return -1;
+    }
+    if(arglen > 5){
+        printf("Too many arguments. \n");
+        return -1;
+    }
+    int len;
+    len = strlen(file1);
+    if(strcmp((file1 + len - 4), ".bmp")){
+        printf("Incorrect file type, file1: %s \n", file1);
+        return -1;
+    }
+    len = strlen(file2);
+    if(strcmp((file2 + len - 4), ".bmp")){
+        printf("Incorrect file type, file2: %s \n", file2);
+        return -1;
+    }
+    len = strlen(outfile);
+    if(strcmp((outfile + len - 4), ".bmp")){
+        printf("Incorrect file location, out: %s \n", outfile);
+        return -1;
+    }
+    if(!(ratio > 0) || !(ratio < 1)){
+        printf("Incorrect ratio value. \n");
+        return -1;
+    }
+
+    return 0;
+}
+
 int main(int argc, char *argv[]){
-    char *im1 = "flowers.bmp";
-    //char *test = "test.bmp";
-    BITMAPFILEHEADER bmpFileHeader;
-    BITMAPINFOHEADER bmpInfoHeader;
+    int arglen = argc;
+    char *file1;
+    char *file2;
+    double ratio = atof(argv[3]);
+    char *out;
+    file1 = argv[1];
+    file2 = argv[2];
+    out = argv[4];
 
-    int check = read_headers(&bmpFileHeader, &bmpInfoHeader, im1);
-    if(check){
+    int check_args = arg_checker(arglen, file1, file2, ratio, out);
+    if(check_args){
+        printf("Refer to man_blendimages.txt \n");
         return -1;
     }
 
-    FILE *test;
-    test = fopen("test.bmp", "wb");
-    if(test == NULL){
-        printf("Cannot write to file. \n");
+
+    BITMAPFILEHEADER bmpFileHeader1;
+    BITMAPINFOHEADER bmpInfoHeader1;
+    BITMAPFILEHEADER bmpFileHeader2;
+    BITMAPINFOHEADER bmpInfoHeader2;
+    BITMAPFILEHEADER bmpFileHeaderData;
+    BITMAPINFOHEADER bmpInfoHeaderData;
+
+    /* read pixel headers image 1 */
+    int check_read = read_headers(&bmpFileHeader1, &bmpInfoHeader1, file1);
+    if(check_read){
         return -1;
     }
+    bmpFileHeaderData = bmpFileHeader1;
+    bmpInfoHeaderData = bmpInfoHeader1;
 
-    /* read pixel data */
-    BYTE *pixelArray = get_color(&bmpFileHeader, &bmpInfoHeader, im1);
+    /* read pixel headers image 2 */
+    check_read = read_headers(&bmpFileHeader2, &bmpInfoHeader2, file2);
+    if(check_read){
+        return -1;
+    }
+    if(bmpInfoHeader2.biWidth > bmpInfoHeader1.biWidth){
+        bmpFileHeaderData = bmpFileHeader2;
+        bmpInfoHeaderData = bmpInfoHeader2;
+    }
 
-    //fwrite(&bmpFileHeader, 14, 1, test);
-    //fwrite(&bmpInfoHeader, sizeof(bmpInfoHeader), 1, test);
-    //fseek(test, bmpFileHeader.bfOffBits, SEEK_SET);
-    fwrite(pixelArray, bmpInfoHeader.biSizeImage, 1, test);
+    BYTE *pixelArray1 = get_image(&bmpFileHeader1, &bmpInfoHeader1, file1);
+    BYTE *pixelArray2 = get_image(&bmpFileHeader2, &bmpInfoHeader2, file2);
+
+    /* write to output file */
+    FILE *outfile;
+    outfile = fopen(out, "wb");
+    if(outfile == NULL){
+        printf("Cannot write to file, %s. \n", out);
+        return -1;
+    }
     
-    fclose(test);
-    free(pixelArray);
+    /* write headers to output */
+    fwrite(&(bmpFileHeaderData.bfType), 2, 1, outfile);
+    fwrite(&(bmpFileHeaderData.bfSize), 4, 1, outfile);
+    fwrite(&(bmpFileHeaderData.bfReserved1), 2, 1, outfile);
+    fwrite(&(bmpFileHeaderData.bfReserved2), 2, 1, outfile);
+    fwrite(&(bmpFileHeaderData.bfOffBits), 4, 1, outfile);
+    fwrite(&bmpInfoHeaderData, bmpInfoHeaderData.biSize, 1, outfile);
+
+    BYTE *blendedData;
+    size_t padding = (24 * bmpInfoHeaderData.biWidth + 31) / 32 * 4;
+    size_t imageSize = padding * abs(bmpInfoHeaderData.biHeight);
+    blendedData = (BYTE *)malloc(imageSize);
+    if(blendedData == NULL){
+        printf("Cannot allocate memory for blended data. \n");
+        return -1;
+    }
+    BYTE r1, g1, b1, r2, g2, b2;
+
+    for(int y = 0; y < bmpInfoHeaderData.biHeight; y++){
+        for(int x = 0; x < bmpInfoHeaderData.biWidth; x++){
+            size_t pos = padding * y + 3 * x;
+            float x1, y1, x2, y2;
+            if(bmpInfoHeader1.biWidth < bmpInfoHeaderData.biWidth){
+                x1 = (float) (bmpInfoHeader1.biWidth-1) / bmpInfoHeaderData.biWidth * x;         
+            }
+            else{
+                x1 = x;
+            }
+            if(bmpInfoHeader1.biHeight < bmpInfoHeaderData.biHeight){
+                y1 = (float) (bmpInfoHeader1.biHeight-1) / bmpInfoHeaderData.biHeight * y;        
+            }
+            else{
+                y1 = y;
+            }
+            if(bmpInfoHeader2.biWidth < bmpInfoHeaderData.biWidth){
+                x2 = (float) (bmpInfoHeader2.biWidth-1) / bmpInfoHeaderData.biWidth * x;         
+            }
+            else{
+                x2 = x;
+            }
+            if(bmpInfoHeader2.biHeight < bmpInfoHeaderData.biHeight){
+                y2 = (float) (bmpInfoHeader2.biHeight-1) / bmpInfoHeaderData.biHeight * y;        
+            }
+            else{
+                y2 = y;
+            }
+            r1 = get_color_bilinear(pixelArray1, &bmpInfoHeader1, x1, y1, "r");
+            g1 = get_color_bilinear(pixelArray1, &bmpInfoHeader1, x1, y1, "g");
+            b1 = get_color_bilinear(pixelArray1, &bmpInfoHeader1, x1, y1, "b");
+            r2 = get_color_bilinear(pixelArray2, &bmpInfoHeader2, x2, y2, "r");
+            g2 = get_color_bilinear(pixelArray2, &bmpInfoHeader2, x2, y2, "g");
+            b2 = get_color_bilinear(pixelArray2, &bmpInfoHeader2, x2, y2, "b");
+            blendedData[pos + 0] = ratio * b1 + (1-ratio) * b2;
+            blendedData[pos + 1] = ratio * g1 + (1-ratio) * g2;
+            blendedData[pos + 2] = ratio * r1 + (1-ratio) * r2;
+        }
+    }
+
+    fwrite(blendedData, imageSize, 1, outfile);
+    
+    fclose(outfile);
+    free(pixelArray1);
+    free(pixelArray2);
+    free(blendedData);
     return 0;
 }

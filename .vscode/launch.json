@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${fileDirname}/${fileBasenameNoExtension}",
-            "args": [],
+            "args": ["./blendimages", "lion.bmp", "flowers.bmp", "0.7", "test.bmp"],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
             "environment": [],
