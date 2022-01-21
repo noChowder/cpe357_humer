@@ -183,7 +183,7 @@ BYTE get_color_bilinear(BYTE *imageData, BITMAPINFOHEADER *ih, float x, float y,
 
 int main(int argc, char *argv[]){
     char *im1 = "lion.bmp";
-    char *im2 = "lion.bmp";
+    char *im2 = "flowers.bmp";
     double ratio = .5;
     BITMAPFILEHEADER bmpFileHeader1;
     BITMAPINFOHEADER bmpInfoHeader1;
@@ -239,14 +239,34 @@ int main(int argc, char *argv[]){
     }
     BYTE r1, g1, b1, r2, g2, b2;
 
-    for(int y = 0; y < bmpInfoHeaderData.biHeight-1; y++){
+    for(int y = 0; y < bmpInfoHeaderData.biHeight; y++){
         for(int x = 0; x < bmpInfoHeaderData.biWidth; x++){
             size_t pos = padding * y + 3 * x;
             float x1, y1, x2, y2;
-            x1 = (float) bmpInfoHeader1.biWidth / bmpInfoHeaderData.biWidth * x;
-            y1 = (float) bmpInfoHeader1.biHeight / bmpInfoHeaderData.biHeight * y;
-            x2 = (float) bmpInfoHeader2.biWidth / bmpInfoHeaderData.biWidth * x;
-            y2 = (float) bmpInfoHeader2.biHeight / bmpInfoHeaderData.biHeight * y;
+            if(bmpInfoHeader1.biWidth < bmpInfoHeaderData.biWidth){
+                x1 = (float) (bmpInfoHeader1.biWidth-1) / bmpInfoHeaderData.biWidth * x;         
+            }
+            else{
+                x1 = x;
+            }
+            if(bmpInfoHeader1.biHeight < bmpInfoHeaderData.biHeight){
+                y1 = (float) (bmpInfoHeader1.biHeight-1) / bmpInfoHeaderData.biHeight * y;        
+            }
+            else{
+                y1 = y;
+            }
+            if(bmpInfoHeader2.biWidth < bmpInfoHeaderData.biWidth){
+                x2 = (float) (bmpInfoHeader2.biWidth-1) / bmpInfoHeaderData.biWidth * x;         
+            }
+            else{
+                x2 = x;
+            }
+            if(bmpInfoHeader2.biHeight < bmpInfoHeaderData.biHeight){
+                y2 = (float) (bmpInfoHeader2.biHeight-1) / bmpInfoHeaderData.biHeight * y;        
+            }
+            else{
+                y2 = y;
+            }
             r1 = get_color_bilinear(pixelArray1, &bmpInfoHeader1, x1, y1, "r");
             g1 = get_color_bilinear(pixelArray1, &bmpInfoHeader1, x1, y1, "g");
             b1 = get_color_bilinear(pixelArray1, &bmpInfoHeader1, x1, y1, "b");
