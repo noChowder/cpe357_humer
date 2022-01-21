@@ -6,4 +6,10 @@ Synopsis
 #include <stdio.h>
 #include <string.h>
 
-int blendimages(char *file1, char *file2, double ratio, char *file3);
+int blendimages(char *file1, char *file2, double ratio, char *out);
+
+Description
+The blendimages() function combines the file header, info header, and pixel data of the 24-bit files, pointed to by file1 and file2, into the output file, pointed to by out. It takes the file with the largest pixel width as the size for the output file. The percentage of colors is defined by ratio. Values accepted by ratio are between 0 and 1.
+
+Return Values
+The function returns 0 on success, -1 otherwise.

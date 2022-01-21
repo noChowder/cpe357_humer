@@ -218,6 +218,18 @@ int main(int argc, char *argv[]){
     int check_args = arg_checker(arglen, file1, file2, ratio, out);
     if(check_args){
         printf("Refer to man_blendimages.txt \n");
+        FILE *man;
+        man = fopen("man_blendimages.txt", "r");
+        if(man == NULL){
+            printf("Cannot read file, %s \n", "man_blendimages.txt");
+            return -1;
+        }
+        char c = fgetc(man);
+        while(c != EOF){
+            printf("%c", c);
+            c = fgetc(man);
+        }
+        fclose(man);
         return -1;
     }
 
