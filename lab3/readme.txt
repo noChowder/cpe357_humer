@@ -2,4 +2,15 @@
 
 2. Getchar() will read numbers from stdin as char and not int or float. It only returns an int on failure, so you can check for success if the number it reads is of type char. On failure, you can check if the return is an int.
 
-3. 
+3. This results in a segfault because *i cannot be accessed. The pointer *i is not pointing to any location yet or it's defaulting to a location that cannot be accessed.
+
+#include <stdio.h>
+#include <stdlib.h>
+
+int main(){
+    int *i;
+    *i = 0;
+    return 0;
+}
+
+4. 
