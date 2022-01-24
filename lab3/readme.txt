@@ -13,4 +13,4 @@ int main(){
     return 0;
 }
 
-4. 
+4. Malloc works by looking for enough free memory that can be accessed. It uses brk/sbrk to find that address space and returns null if there is not enough space in the memory. A system call is a request to the kernal to access a resource. A library function is a request to use a function defined in a library. System calls are made if some services are required from the kernal.
