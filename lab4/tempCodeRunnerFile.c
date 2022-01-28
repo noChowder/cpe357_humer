@@ -1,0 +1,1 @@
+imageData = brighten(&bmpInfoHeaderData, imageData, brightness);

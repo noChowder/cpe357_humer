@@ -73,7 +73,7 @@ int read_headers(BITMAPFILEHEADER *fh, BITMAPINFOHEADER *ih, char *fileName){
     return 0;
 }
 
-BYTE *get_image(BITMAPFILEHEADER *fh, BITMAPINFOHEADER *ih, char *fileName){
+BYTE *get_image(BITMAPFILEHEADER *fh, BITMAPINFOHEADER *ih, BYTE *imageData, char *fileName){
     FILE *fp;
 
     fp = fopen(fileName, "rb");
@@ -87,14 +87,8 @@ BYTE *get_image(BITMAPFILEHEADER *fh, BITMAPINFOHEADER *ih, char *fileName){
     size_t width = ih->biWidth;
     size_t padding = (24 * width + 31) / 32 * 4;
     size_t imageSize = padding * height;
-    BYTE *imageData;
-    imageData = (BYTE *)malloc(imageSize);
-    if(imageData == NULL){
-        printf("Cannot allocate memory for image data. \n");
-        return NULL;
-    }
-    fread(imageData, imageSize, 1, fp);
 
+    fread(imageData, imageSize, 1, fp);
     fclose(fp);
     return imageData;
 }
@@ -166,11 +160,13 @@ int main(int argc, char *argv[]){
     file1 = argv[1];
     out = argv[4];
 
+    /*
     arglen = 5;
     file1 = "flowers.bmp";
-    brightness = .5;
-    parallel = 1;
+    brightness = .2;
+    parallel = 0;
     out = "test.bmp";
+    */
 
     int check_args = arg_checker(arglen, file1, brightness, parallel, out);
     if(check_args){
@@ -178,66 +174,136 @@ int main(int argc, char *argv[]){
         return -1;
     }
 
-    BITMAPFILEHEADER bmpFileHeader1;
-    BITMAPINFOHEADER bmpInfoHeader1;
     BITMAPFILEHEADER bmpFileHeaderData;
     BITMAPINFOHEADER bmpInfoHeaderData;
 
     /* read pixel headers image 1 */
-    int check_read = read_headers(&bmpFileHeader1, &bmpInfoHeader1, file1);
+    int check_read = read_headers(&bmpFileHeaderData, &bmpInfoHeaderData, file1);
     if(check_read){
         return -1;
     }
-    bmpFileHeaderData = bmpFileHeader1;
-    bmpInfoHeaderData = bmpInfoHeader1;
-
-    BYTE *pixelArray1 = get_image(&bmpFileHeader1, &bmpInfoHeader1, file1); // image data
-
-    /* write to output file */
-    FILE *outfile;
-    outfile = fopen(out, "wb");
-    if(outfile == NULL){
-        printf("Cannot write to file, %s. \n", out);
-        return -1;
-    }
-    
-    /* write headers to output */
-    fwrite(&(bmpFileHeaderData.bfType), sizeof(WORD), 1, outfile);
-    fwrite(&(bmpFileHeaderData.bfSize), sizeof(DWORD), 1, outfile);
-    fwrite(&(bmpFileHeaderData.bfReserved1), sizeof(WORD), 1, outfile);
-    fwrite(&(bmpFileHeaderData.bfReserved2), sizeof(WORD), 1, outfile);
-    fwrite(&(bmpFileHeaderData.bfOffBits), sizeof(DWORD), 1, outfile);
-    fwrite(&bmpInfoHeaderData, bmpInfoHeaderData.biSize, 1, outfile);
     
     size_t padding = (24 * bmpInfoHeaderData.biWidth + 31) / 32 * 4;
     size_t imageSize = padding * abs(bmpInfoHeaderData.biHeight);
 
     /* parallel is 0 */
     if(!parallel){
-        pixelArray1 = brighten(&bmpInfoHeader1, pixelArray1, brightness);
-        fwrite(pixelArray1, imageSize, 1, outfile);
+        BYTE *imageData = (BYTE *)malloc(imageSize);
+        if(imageData == NULL){
+            printf("Cannot allocate memory for image data. \n");
+            return -1;
+        }
+        imageData = get_image(&bmpFileHeaderData, &bmpInfoHeaderData, imageData, file1); // image data
+        clock_t start = clock();
+        imageData = brighten(&bmpInfoHeaderData, imageData, brightness);
+        clock_t end = clock();
+        double timediff = (double)(end - start) / CLOCKS_PER_SEC;
+        printf("\tProcess time w/o fork is: \t%f\n", timediff);
+
+        /* open output file */
+        FILE *outfile;
+        outfile = fopen(out, "wb");
+        if(outfile == NULL){
+            printf("Cannot write to file, %s. \n", out);
+            return -1;
+        }
+        /* write to output */
+        fwrite(&(bmpFileHeaderData.bfType), sizeof(WORD), 1, outfile);
+        fwrite(&(bmpFileHeaderData.bfSize), sizeof(DWORD), 1, outfile);
+        fwrite(&(bmpFileHeaderData.bfReserved1), sizeof(WORD), 1, outfile);
+        fwrite(&(bmpFileHeaderData.bfReserved2), sizeof(WORD), 1, outfile);
+        fwrite(&(bmpFileHeaderData.bfOffBits), sizeof(DWORD), 1, outfile);
+        fwrite(&bmpInfoHeaderData, bmpInfoHeaderData.biSize, 1, outfile);
+        fwrite(imageData, imageSize, 1, outfile);
         fclose(outfile);
-        free(pixelArray1);
-        printf("parallel was 0 \n");
+        free(imageData);
+        //printf("parallel was 0 \n");
         return 0;
     }
 
-    BYTE *brighterData = (BYTE *)mmap(NULL, sizeof(imageSize), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
+    /* allocate using mmap */
+    BYTE *brighterData = (BYTE *)mmap(NULL, imageSize, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
     if(brighterData == NULL){
         printf("Cannot allocate memory for brighter data. \n");
         return -1;
     }
+    brighterData = get_image(&bmpFileHeaderData, &bmpInfoHeaderData, brighterData, file1);
 
+    clock_t start = clock();
     if(fork() == 0){ // child
-        printf("child here \n");
+        //printf("child here \n");
+        for(int y = 0; y < bmpInfoHeaderData.biHeight/2; y++){
+            for(int x = 0; x < bmpInfoHeaderData.biWidth; x++){
+                size_t pos = padding * y + 3 * x;
+                int blue = (int)brighterData[pos + 0] + (brightness * 255); // blue
+                if(blue > 255){
+                    blue = 255;
+                }
+                brighterData[pos + 0] = (BYTE)blue;
+                int green = (int)brighterData[pos + 1] + (brightness * 255); // green
+                if(green > 255){
+                    green = 255;
+                }
+                brighterData[pos + 1] = (BYTE)green;
+                int red = (int)brighterData[pos + 2] + (brightness * 255); // red
+                if(red > 255){
+                    red = 255;
+                }
+                brighterData[pos + 2] = (BYTE)red;
+            }
+        }
     }
     else{ // parent
-        printf("parent here \n");
-        wait(NULL);
+        //printf("parent here \n");
+        //wait(0);
+        /*LONG height = bmpInfoHeaderData.biHeight;
+        printf("%d \n", height);
+        if(bmpInfoHeaderData.biHeight%2 != 0){ // catches odd rows
+            height = bmpInfoHeaderData.biHeight + 1;
+        }*/
+        wait(0);
+        for(int y = bmpInfoHeaderData.biHeight/2; y < bmpInfoHeaderData.biHeight; y++){
+            for(int x = 0; x < bmpInfoHeaderData.biWidth; x++){
+                size_t pos = padding * y + 3 * x;
+                int blue = (int)brighterData[pos + 0] + (brightness * 255); // blue
+                if(blue > 255){
+                    blue = 255;
+                }
+                brighterData[pos + 0] = (BYTE)blue;
+                int green = (int)brighterData[pos + 1] + (brightness * 255); // green
+                if(green > 255){
+                    green = 255;
+                }
+                brighterData[pos + 1] = (BYTE)green;
+                int red = (int)brighterData[pos + 2] + (brightness * 255); // red
+                if(red > 255){
+                    red = 255;
+                }
+                brighterData[pos + 2] = (BYTE)red;
+            }
+        }
+        //wait(0);
     }
-    
-    munmap(brighterData, sizeof(imageSize));
+    clock_t end = clock();
+    double timediff = (double)(end - start) / CLOCKS_PER_SEC;
+    printf("\tProcess time with fork is: \t%f\n", timediff);
+
+    /* open output file */
+    FILE *outfile;
+    outfile = fopen(out, "wb");
+    if(outfile == NULL){
+        printf("Cannot write to file, %s. \n", out);
+        return -1;
+    }
+    /* write to output */
+    fwrite(&(bmpFileHeaderData.bfType), sizeof(WORD), 1, outfile);
+    fwrite(&(bmpFileHeaderData.bfSize), sizeof(DWORD), 1, outfile);
+    fwrite(&(bmpFileHeaderData.bfReserved1), sizeof(WORD), 1, outfile);
+    fwrite(&(bmpFileHeaderData.bfReserved2), sizeof(WORD), 1, outfile);
+    fwrite(&(bmpFileHeaderData.bfOffBits), sizeof(DWORD), 1, outfile);
+    fwrite(&bmpInfoHeaderData, bmpInfoHeaderData.biSize, 1, outfile);
+    fwrite(brighterData, imageSize, 1, outfile);
     fclose(outfile);
-    free(pixelArray1);
+    munmap(brighterData, imageSize);
     return 0;
 }
