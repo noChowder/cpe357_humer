@@ -119,10 +119,11 @@ int arg_checker(int arglen, char *file1, double brightness, int parallel, char *
     }
     if(!(brightness > 0) || !(brightness < 1)){
         printf("Incorrect brightness value. \n");
+        fprintf(stderr, "%f \n", brightness);
         return -1;
     }
-    if(!(parallel == 0) || !(parallel == 1)){
-        printf("Incorrect brightness value. \n");
+    if(parallel != 0 && parallel != 1){
+        printf("Incorrect parallel value. \n");
         return -1;
     }
 
@@ -137,6 +138,12 @@ int main(int argc, char *argv[]){
     char *out;
     file1 = argv[1];
     out = argv[4];
+
+    arglen = 5;
+    file1 = "flowers.bmp";
+    brightness = 0.8;
+    parallel = 0;
+    out = "test.bmp";
 
     int check_args = arg_checker(arglen, file1, brightness, parallel, out);
     if(check_args){
@@ -158,11 +165,6 @@ int main(int argc, char *argv[]){
         fprintf(stderr, "Incorrect user input. \n");
         //return -1;
     }
-
-    file1 = "flowers.bmp";
-    brightness = 0.8;
-    parallel = 0;
-    out = "test.bmp";
 
     BITMAPFILEHEADER bmpFileHeader1;
     BITMAPINFOHEADER bmpInfoHeader1;
@@ -188,11 +190,11 @@ int main(int argc, char *argv[]){
     }
     
     /* write headers to output */
-    fwrite(&(bmpFileHeaderData.bfType), 2, 1, outfile);
-    fwrite(&(bmpFileHeaderData.bfSize), 4, 1, outfile);
-    fwrite(&(bmpFileHeaderData.bfReserved1), 2, 1, outfile);
-    fwrite(&(bmpFileHeaderData.bfReserved2), 2, 1, outfile);
-    fwrite(&(bmpFileHeaderData.bfOffBits), 4, 1, outfile);
+    fwrite(&(bmpFileHeaderData.bfType), sizeof(WORD), 1, outfile);
+    fwrite(&(bmpFileHeaderData.bfSize), sizeof(DWORD), 1, outfile);
+    fwrite(&(bmpFileHeaderData.bfReserved1), sizeof(WORD), 1, outfile);
+    fwrite(&(bmpFileHeaderData.bfReserved2), sizeof(WORD), 1, outfile);
+    fwrite(&(bmpFileHeaderData.bfOffBits), sizeof(DWORD), 1, outfile);
     fwrite(&bmpInfoHeaderData, bmpInfoHeaderData.biSize, 1, outfile);
 
     BYTE *brighterData;
