@@ -4,6 +4,8 @@
 #include <sys/mman.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <sys/wait.h>
+#include <time.h>
 
 typedef unsigned short WORD;
 typedef unsigned int DWORD;
@@ -97,6 +99,31 @@ BYTE *get_image(BITMAPFILEHEADER *fh, BITMAPINFOHEADER *ih, char *fileName){
     return imageData;
 }
 
+BYTE *brighten(BITMAPINFOHEADER *ih, BYTE *imageData, float brightness){
+    size_t padding = (24 * ih->biWidth + 31) / 32 * 4;
+    for(int y = 0; y < ih->biHeight; y++){
+        for(int x = 0; x < ih->biWidth; x++){
+            size_t pos = padding * y + 3 * x;
+            int blue = (int)imageData[pos + 0] + (brightness * 255); // blue
+            if(blue > 255){
+                blue = 255;
+            }
+            imageData[pos + 0] = (BYTE)blue;
+            int green = (int)imageData[pos + 1] + (brightness * 255); // green
+            if(green > 255){
+                green = 255;
+            }
+            imageData[pos + 1] = (BYTE)green;
+            int red = (int)imageData[pos + 2] + (brightness * 255); // red
+            if(red > 255){
+                red = 255;
+            }
+            imageData[pos + 2] = (BYTE)red;
+        }
+    }
+    return imageData;
+}
+
 int arg_checker(int arglen, char *file1, double brightness, int parallel, char *outfile){
     if(arglen < 5){
         printf("Too little arguments. \n");
@@ -133,7 +160,7 @@ int arg_checker(int arglen, char *file1, double brightness, int parallel, char *
 int main(int argc, char *argv[]){
     int arglen = argc;
     char *file1;
-    double brightness = atof(argv[2]);
+    float brightness = atof(argv[2]);
     int parallel = atoi(argv[3]);
     char *out;
     file1 = argv[1];
@@ -141,29 +168,14 @@ int main(int argc, char *argv[]){
 
     arglen = 5;
     file1 = "flowers.bmp";
-    brightness = 0.8;
-    parallel = 0;
+    brightness = .5;
+    parallel = 1;
     out = "test.bmp";
 
     int check_args = arg_checker(arglen, file1, brightness, parallel, out);
     if(check_args){
-        /*
-        printf("Refer to man_blendimages.txt \n");
-        FILE *man;
-        man = fopen("man_blendimages.txt", "r");
-        if(man == NULL){
-            printf("Cannot read file, %s \n", "man_blendimages.txt");
-            return -1;
-        }
-        char c = fgetc(man);
-        while(c != EOF){
-            printf("%c", c);
-            c = fgetc(man);
-        }
-        fclose(man);
-        */
         fprintf(stderr, "Incorrect user input. \n");
-        //return -1;
+        return -1;
     }
 
     BITMAPFILEHEADER bmpFileHeader1;
@@ -179,7 +191,7 @@ int main(int argc, char *argv[]){
     bmpFileHeaderData = bmpFileHeader1;
     bmpInfoHeaderData = bmpInfoHeader1;
 
-    BYTE *pixelArray1 = get_image(&bmpFileHeader1, &bmpInfoHeader1, file1); // get file data
+    BYTE *pixelArray1 = get_image(&bmpFileHeader1, &bmpInfoHeader1, file1); // image data
 
     /* write to output file */
     FILE *outfile;
@@ -196,21 +208,36 @@ int main(int argc, char *argv[]){
     fwrite(&(bmpFileHeaderData.bfReserved2), sizeof(WORD), 1, outfile);
     fwrite(&(bmpFileHeaderData.bfOffBits), sizeof(DWORD), 1, outfile);
     fwrite(&bmpInfoHeaderData, bmpInfoHeaderData.biSize, 1, outfile);
-
-    BYTE *brighterData;
+    
     size_t padding = (24 * bmpInfoHeaderData.biWidth + 31) / 32 * 4;
     size_t imageSize = padding * abs(bmpInfoHeaderData.biHeight);
-    brighterData = (BYTE *)malloc(imageSize);
+
+    /* parallel is 0 */
+    if(!parallel){
+        pixelArray1 = brighten(&bmpInfoHeader1, pixelArray1, brightness);
+        fwrite(pixelArray1, imageSize, 1, outfile);
+        fclose(outfile);
+        free(pixelArray1);
+        printf("parallel was 0 \n");
+        return 0;
+    }
+
+    BYTE *brighterData = (BYTE *)mmap(NULL, sizeof(imageSize), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
     if(brighterData == NULL){
-        printf("Cannot allocate memory for blended data. \n");
+        printf("Cannot allocate memory for brighter data. \n");
         return -1;
     }
-    brighterData = pixelArray1;
 
-    fwrite(brighterData, imageSize, 1, outfile);
+    if(fork() == 0){ // child
+        printf("child here \n");
+    }
+    else{ // parent
+        printf("parent here \n");
+        wait(NULL);
+    }
     
+    munmap(brighterData, sizeof(imageSize));
     fclose(outfile);
     free(pixelArray1);
-    free(brighterData);
     return 0;
 }
