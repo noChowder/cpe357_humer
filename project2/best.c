@@ -39,6 +39,7 @@ unsigned char *mymalloc(unsigned int size){
 
     currChunk =  get_last_chunk();
     if(!currChunk){ // no heap 
+        //sbrk(0);
         currChunk = sbrk(reqSize);
         currChunk->info = 1;
         currChunk->size = reqSize;
@@ -138,19 +139,19 @@ void analyze(){
     printf("\n--------------------------------------------------------------\n");
     if(!startofheap){
         printf("no heap, ");
-        printf("program break on address %p", sbrk(0));
+            printf("program break on address %p", sbrk(0));
         return;
     }
     chunkhead *ch = (chunkhead *)startofheap;
     for(int no = 0; ch; ch = (chunkhead *)ch->next, no++){
-        printf("%d | current addr: %p |", no, ch);
+        printf("%d | current addr: %x |", no, ch);
         printf("size: %d | ", ch->size);
         printf("info: %d | ", ch->info);
-        printf("next: %p | ", ch->next);
-        printf("prev: %p", ch->prev);
+        printf("next: %x | ", ch->next);
+        printf("prev: %x", ch->prev);
         printf("      \n");
     }
-    printf("program break on address %p\n", sbrk(0));
+    printf("program break on address %x\n", sbrk(0));
 }
 
 void main(){
@@ -164,13 +165,15 @@ void main(){
     }
     analyze(); // 50% of points if this is correct
     myfree(a[95]);
+    analyze();
     a[95] = mymalloc(1000);
-    analyze(); // 25% points, this new chunk shoulf fill the smaller free one
+    analyze(); // 25% points, this new chunk should fill the smaller free one
+    /*
     // (best fit)
     for(int i = 90; i < 100; i++){
         myfree(a[i]);
     }
     analyze(); // 25% should be an empty heap now with the start address
     // from the program start
-    
+    */   
 }
