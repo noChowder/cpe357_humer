@@ -22,6 +22,25 @@ chunkhead *get_last_chunk(){
     return ch;
 }
 
+chunkhead *get_best_chunk(unsigned int reqSize, chunkhead *currChunk){
+    if(!startofheap){
+        return NULL;
+    }
+    chunkhead *ch = (chunkhead *)startofheap;
+    chunkhead *best = NULL;
+    for( ; ch->next; ch = (chunkhead *)ch->next){
+        if(ch->info == 0 && ch->size >= reqSize && ch->size <= currChunk->size){
+            best = ch;
+        }
+    }
+    if(best){
+        return best;
+    }
+    else{
+        return ch; // no free chunks
+    }
+}
+
 unsigned char *mymalloc(unsigned int size){
     chunkhead *currChunk; // current working chunk
     chunkhead *nextChunk; // next working chunk
@@ -37,25 +56,41 @@ unsigned char *mymalloc(unsigned int size){
         reqSize = ((int)(size / PAGESIZE) + 1) * PAGESIZE;
     }
 
-    currChunk =  get_last_chunk();
+    currChunk = get_best_chunk(reqSize, currChunk);
     if(!currChunk){ // no heap 
         //sbrk(0);
+        heapsize = 1;
         currChunk = sbrk(reqSize);
         currChunk->info = 1;
         currChunk->size = reqSize;
         startofheap = currChunk; // set start of heap
-        //heapsize = sizeof(chunkhead);
         return (BYTE *)currChunk + sizeof(chunkhead);
     }
-    if(currChunk){
+    else if(currChunk->next == NULL){
         nextChunk = sbrk(reqSize);
         nextChunk->info = 1;
         nextChunk->size = reqSize;
         nextChunk->next = NULL;
         nextChunk->prev = (BYTE *)currChunk;
         currChunk->next = (BYTE *)nextChunk;
-        //heapsize += (sizeof(currChunk) + sizeof(chunkhead));
         return (BYTE *)nextChunk + sizeof(chunkhead);
+    }
+    else{
+        currChunk->info = 1;
+        //nextChunk = (chunkhead *)currChunk->next;
+        if(currChunk->size > reqSize){
+            unsigned int free = currChunk->size - reqSize;
+            BYTE *address = (BYTE *)currChunk + reqSize;
+            nextChunk = (chunkhead *)address;
+            nextChunk->info = 0;
+            nextChunk->size = free;
+            nextChunk->next = currChunk->next;
+            nextChunk->prev = (BYTE *)currChunk;
+            ((chunkhead *)currChunk->next)->prev = (BYTE *)nextChunk;
+            currChunk->size = reqSize;
+            currChunk->next = (BYTE *)nextChunk;
+        }
+        return (BYTE *)currChunk + sizeof(chunkhead);
     }
 
     return NULL;
@@ -144,14 +179,14 @@ void analyze(){
     }
     chunkhead *ch = (chunkhead *)startofheap;
     for(int no = 0; ch; ch = (chunkhead *)ch->next, no++){
-        printf("%d | current addr: %x |", no, ch);
+        printf("%d | current addr: %p |", no, ch);
         printf("size: %d | ", ch->size);
         printf("info: %d | ", ch->info);
-        printf("next: %x | ", ch->next);
-        printf("prev: %x", ch->prev);
+        printf("next: %p | ", ch->next);
+        printf("prev: %p", ch->prev);
         printf("      \n");
     }
-    printf("program break on address %x\n", sbrk(0));
+    printf("program break on address %p\n", sbrk(0));
 }
 
 void main(){
@@ -165,15 +200,20 @@ void main(){
     }
     analyze(); // 50% of points if this is correct
     myfree(a[95]);
-    analyze();
+    //myfree(a[96]);
+    //myfree(a[98]);
+    //analyze();
     a[95] = mymalloc(1000);
+    //analyze();
+    //a[96] = mymalloc(1000);
+    //analyze();
+    //a[98] = mymalloc(1000);
     analyze(); // 25% points, this new chunk should fill the smaller free one
-    /*
     // (best fit)
     for(int i = 90; i < 100; i++){
         myfree(a[i]);
     }
     analyze(); // 25% should be an empty heap now with the start address
     // from the program start
-    */   
+    printf("\n");
 }
