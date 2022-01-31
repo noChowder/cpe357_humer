@@ -286,7 +286,7 @@ int main(int argc, char *argv[]){
     }
     clock_t end = clock();
     double timediff = (double)(end - start) / CLOCKS_PER_SEC;
-    printf("\tProcess time with fork is: \t%f\n", timediff);
+    fprintf(stderr, "\tProcess time with fork is: \t%f\n", timediff);
 
     /* open output file */
     FILE *outfile;
