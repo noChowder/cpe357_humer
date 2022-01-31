@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 typedef unsigned char BYTE;
@@ -44,7 +45,6 @@ chunkhead *get_best_chunk(unsigned int reqSize, chunkhead *currChunk){
 unsigned char *mymalloc(unsigned int size){
     chunkhead *currChunk; // current working chunk
     chunkhead *nextChunk; // next working chunk
-    chunkhead *prevChunk; // previous working chunk
     //currChunk = (chunkhead *)startofheap;
 
     /* define required size of chunk */
@@ -56,17 +56,21 @@ unsigned char *mymalloc(unsigned int size){
         reqSize = ((int)(size / PAGESIZE) + 1) * PAGESIZE;
     }
 
-    currChunk = get_best_chunk(reqSize, currChunk);
-    if(!currChunk){ // no heap 
+    
+    if(heapsize == 0){ // no heap 
         //sbrk(0);
         heapsize = 1;
         currChunk = sbrk(reqSize);
         currChunk->info = 1;
         currChunk->size = reqSize;
+        heapsize = 1;
         startofheap = currChunk; // set start of heap
         return (BYTE *)currChunk + sizeof(chunkhead);
     }
-    else if(currChunk->next == NULL){
+    currChunk = (chunkhead *)startofheap;
+
+    currChunk = get_best_chunk(reqSize, currChunk);
+    if(currChunk->next == NULL){
         nextChunk = sbrk(reqSize);
         nextChunk->info = 1;
         nextChunk->size = reqSize;
@@ -105,6 +109,7 @@ void myfree(unsigned char *address){
     /* prev NULL && next NULL */
     if(!prevChunk && !nextChunk){
         startofheap = NULL;
+        heapsize = 0;
         brk(address-sizeof(chunkhead));
     }
     /* prev NULL && next 0 */
@@ -166,6 +171,7 @@ void myfree(unsigned char *address){
     /* no heap */
     if(currChunk->info == 0 && currChunk->prev == NULL && currChunk->next == NULL){
         startofheap = NULL;
+        heapsize = 0;
         brk(currChunk);
     }
 }
@@ -174,19 +180,19 @@ void analyze(){
     printf("\n--------------------------------------------------------------\n");
     if(!startofheap){
         printf("no heap, ");
-            printf("program break on address %p", sbrk(0));
+            printf("program break on address %x", sbrk(0));
         return;
     }
     chunkhead *ch = (chunkhead *)startofheap;
     for(int no = 0; ch; ch = (chunkhead *)ch->next, no++){
-        printf("%d | current addr: %p |", no, ch);
+        printf("%d | current addr: %x |", no, ch);
         printf("size: %d | ", ch->size);
         printf("info: %d | ", ch->info);
-        printf("next: %p | ", ch->next);
-        printf("prev: %p", ch->prev);
+        printf("next: %x | ", ch->next);
+        printf("prev: %x", ch->prev);
         printf("      \n");
     }
-    printf("program break on address %p\n", sbrk(0));
+    printf("program break on address %x\n", sbrk(0));
 }
 
 void main(){
