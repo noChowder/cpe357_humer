@@ -12,18 +12,20 @@ int main(){
     printf("pid before fork: \t%d \n", pid);
     time_t T = time(NULL);
 
-    struct tm tm = *localtime(&T);
-    printf("Time is: \t\t%d:%d:%d \n", tm.tm_hour, tm.tm_min, tm.tm_sec);
+    struct tm *tm = (struct tm *)mmap(NULL, sizeof(struct tm), PROT_READ | PROT_WRITE, MAP_ANON | MAP_SHARED, -1, 0);
+    *tm = *localtime(&T);
+    printf("Time is: \t\t%d:%d:%d \n", tm->tm_hour, tm->tm_min, tm->tm_sec);
 
     if(fork() == 0){
         printf("child here\n");
         pid = getpid();
         printf("child pid: \t\t%d \n", pid);
-        int old_sec = tm.tm_sec;
+        int old_sec = tm->tm_sec;
         sleep(5);
-        tm = *localtime(&T);
-        printf("Time is: \t\t%d:%d:%d \n", tm.tm_hour, tm.tm_min, tm.tm_sec);
-        printf("Elapsed time: \t%d sec\n", tm.tm_sec-old_sec);
+        T = time(NULL);
+        *tm = *localtime(&T);
+        printf("Time is: \t\t%d:%d:%d \n", tm->tm_hour, tm->tm_min, tm->tm_sec);
+        printf("Elapsed time: \t\t%d sec\n", tm->tm_sec-old_sec);
     }
     else{
         printf("parent here \n");
