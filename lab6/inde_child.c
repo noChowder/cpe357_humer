@@ -7,9 +7,9 @@
 #include <sys/mman.h>
 
 int main(){
-    int *p = (int *)mmap(NULL, 4, PROT_READ | PROT_WRITE, MAP_ANON | MAP_SHARED, -1, 0);
-    int pid = getpid();
-    printf("pid before fork: \t%d \n", pid);
+    int parent_pid = getpid();
+    int *childp = (int *)mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_ANON | MAP_SHARED, -1, 0);
+    printf("pid before fork: \t%d \n", parent_pid);
     time_t T = time(NULL);
 
     struct tm *tm = (struct tm *)mmap(NULL, sizeof(struct tm), PROT_READ | PROT_WRITE, MAP_ANON | MAP_SHARED, -1, 0);
@@ -18,8 +18,8 @@ int main(){
 
     if(fork() == 0){
         printf("child here\n");
-        pid = getpid();
-        printf("child pid: \t\t%d \n", pid);
+        *childp = getpid();
+        printf("child pid: \t\t%d \n", *childp);
         int old_sec = tm->tm_sec;
         sleep(5);
         T = time(NULL);
@@ -29,11 +29,12 @@ int main(){
     }
     else{
         printf("parent here \n");
-        pid = getpid();
-        printf("parent pid: \t\t%d \n", pid);
+        parent_pid = getpid();
+        printf("parent pid: \t\t%d \n", parent_pid);
         wait(0);
     }
 
-    munmap(p, 4);
+    munmap(childp, sizeof(int));
+    munmap(tm, sizeof(struct tm));
     return 0;
 }
