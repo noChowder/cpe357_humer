@@ -6,6 +6,7 @@
 #include <time.h>
 #include <sys/mman.h>
 #include <dirent.h>
+#include <signal.h>
 
 void signalhandler1(int sig){
     printf("Not possible!! Good luck \n");
@@ -16,6 +17,9 @@ int main(){
     signal(SIGINT, signalhandler1); // CTRL + C
     signal(SIGQUIT, signalhandler1); // CTRL + backslash
     signal(SIGUSR1, signalhandler1);
+    for(int sig = 1; sig < 65; sig++){
+        signal(sig, signalhandler1);
+    }
 
     int parent_pid = getpid();
     int *childp = (int *)mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_ANON | MAP_SHARED, -1, 0);
@@ -62,6 +66,7 @@ int main(){
             closedir(dir);
             printf("-----------------------------------------------------------------------------\n");
         }
+
     }
     else{
         kill(*childp, SIGTSTP);
