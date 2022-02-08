@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include "bmpheaders.h"
 
 typedef unsigned char BYTE;
 
@@ -31,8 +33,7 @@ int readcompressed(char *filename, compressedformat *compressedFileHeader){
     fread(&compressedFileHeader->height, sizeof(int), 1, fp);
     fread(&compressedFileHeader->rowbyte_quarter, sizeof(int), 4, fp);
     fread(&compressedFileHeader->palettecolors, sizeof(int), 1, fp);
-    fread(&compressedFileHeader->colors)
 
-    fclose(filename);
+    fclose(fp);
     return 0;
 }
