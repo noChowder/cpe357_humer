@@ -1,6 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/mman.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <sys/wait.h>
 #include "bmpheaders.h"
 
 typedef struct col{
@@ -37,37 +41,25 @@ int readCompressedHeader(char *filename, compressedformat *compressedFileHeader)
     return 0;
 }
 
-int readCompressedData(char *filename, chunk *data){
-    FILE *fp;
-    fp = fopen(filename, "rb");
-    if(fp == NULL){
-        printf("Cannot read %s \n", filename);
-        return -1;
-    }
-    fseek(fp, sizeof(compressedformat), SEEK_SET);
-
-    while( fread(&data->color_index, sizeof(BYTE), 1, fp) != 0 ){
-        fread(&data->count, sizeof(short), 1, fp);
-    }
-
-    fclose(fp);
-    return 0;
-}
-
-BYTE *decompress(char *filename, compressedformat *cfh, chunk *cdata, BITMAPINFOHEADER *fih, BYTE *imagedata){
+BYTE *decompress(char *filename, compressedformat *cfh, chunk *cdata, BITMAPINFOHEADER *fih, BYTE *imagedata, int pos, int end, int rowbyte){
     FILE *filein;
     filein = fopen(filename, "rb");
     if(filein == NULL){
         printf("Cannot read %s \n", filename);
         return NULL;
     }
-    fseek(filein, sizeof(compressedformat), SEEK_SET);
+    if(rowbyte > 0){
+        fseek(filein, sizeof(compressedformat) + cfh->rowbyte_quarter[rowbyte-1], SEEK_SET);
+    }
+    else{
+        fseek(filein, sizeof(compressedformat), SEEK_SET);
+    }
 
     /* write data to output file */
-    size_t padding = (24 * fih->biWidth + 31) / 32 * 4;
-    size_t imageSize = padding * abs(fih->biHeight);
-    int pos = 0; // (fih->biWidth * fih->biHeight)
-    while(pos < imageSize){
+    //size_t padding = (24 * fih->biWidth + 31) / 32 * 4;
+    //size_t imageSize = padding * abs(fih->biHeight);
+    //pos = 0; 
+    while(pos < end){
         fread(&cdata->color_index, sizeof(BYTE), 1, filein);
         fread(&cdata->count, sizeof(short), 1, filein);
 
@@ -79,16 +71,6 @@ BYTE *decompress(char *filename, compressedformat *cfh, chunk *cdata, BITMAPINFO
             pos+=3;
             cdata->count--;
         }
-
-        /*for(int y = 0; y < abs(fih->biHeight); y++){
-            for(int x = 0; x < fih->biWidth; x++){
-                size_t pos = padding * y + 3 * x;
-                imagedata[pos + 0] = cfh->colors[cdata->color_index].b; // blue
-                imagedata[pos + 1] = cfh->colors[cdata->color_index].g; // green
-                imagedata[pos + 2] = cfh->colors[cdata->color_index].r; // red
-            }
-        }*/
-        //printf("index: %d \n", pos);
     }
 
     fclose(filein);
@@ -104,11 +86,6 @@ int main(){
     int check_compressedHeader = readCompressedHeader("compressed.bin", &cfh);
     if(check_compressedHeader){
         perror("readCompressedHeader() failed");
-        return -1;
-    }
-    int check_compressedData = readCompressedData("compressed.bin", &cdata);
-    if(check_compressedData){
-        perror("readCompressedData() failed");
         return -1;
     }
 
@@ -134,14 +111,67 @@ int main(){
 
     size_t padding = (24 * fih.biWidth + 31) / 32 * 4;
     size_t imageSize = padding * abs(fih.biHeight);
-    BYTE *imagedata = (BYTE *)malloc(imageSize);
+    BYTE *imagedata = (BYTE *)mmap(NULL, imageSize, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
     if(imagedata == NULL){
+        perror("mmap() failed");
         return -1;
     }
-    imagedata = decompress("compressed.bin", &cfh, &cdata, &fih, imagedata);
-    if(!imagedata){
-        perror("decompress() failed");
-        return -1;
+    //int *pos = (int *)mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_ANON | MAP_SHARED, -1, 0);
+    //int *end = (int *)mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_ANON | MAP_SHARED, -1, 0);
+
+    //printf("%d \n", cfh.rowbyte_quarter[0]);
+    //printf("%d \n", cfh.rowbyte_quarter[1]);
+    //printf("%d \n", cfh.rowbyte_quarter[2]);
+    //printf("%d \n", cfh.rowbyte_quarter[3]);
+
+    int f1 = fork();
+    int f2 = fork();
+    int pos;
+    int end;
+
+    if(f1 > 0 && f2 > 0){
+        wait(0);
+        //printf("process 1\n");
+        pos = imageSize/4*3;
+        end = imageSize;
+        imagedata = decompress("compressed.bin", &cfh, &cdata, &fih, imagedata, pos, end, 3);
+        if(!imagedata){
+            perror("decompress() failed");
+            return -1;
+        }
+    }
+    else if(f1 == 0 && f2 > 0){
+        wait(0);
+        //printf("process 2\n");
+        pos = imageSize/2;
+        end = imageSize/4*3;
+        imagedata = decompress("compressed.bin", &cfh, &cdata, &fih, imagedata, pos, end, 2);
+        if(!imagedata){
+            perror("decompress() failed");
+            return -1;
+        }
+    }
+    else if(f1 > 0 && f2 == 0){
+        wait(0);
+        //printf("process 3\n");
+        pos = imageSize/4;
+        end = imageSize/2;
+        imagedata = decompress("compressed.bin", &cfh, &cdata, &fih, imagedata, pos, end, 1);
+        if(!imagedata){
+            perror("decompress() failed");
+            return -1;
+        }
+    }
+    else if(f1 == 0 && f2 == 0){
+        wait(0);
+        //printf("process 4\n");
+        pos = 0;
+        end = imageSize/4;
+        imagedata = decompress("compressed.bin", &cfh, &cdata, &fih, imagedata, pos, end, 0);
+        if(!imagedata){
+            perror("decompress() failed");
+            return -1;
+        }
     }
     
     /* check colors and index */
@@ -153,9 +183,19 @@ int main(){
         putchar('\n');
     }*/
 
+    /*FILE *filein;
+    filein = fopen("compressed.bin", "rb");
+    int count = 0;
+    while(fread(&cdata.color_index, sizeof(BYTE), 1, filein) != 0){
+        count+=3;
+    }
+    printf("# of bytes: %d \n", count);
+    fclose(filein);*/
+
     FILE *fileout;
     fileout = fopen("outfile.bmp", "wb");
     if(fileout == NULL){
+        perror("fopen() failed");
         return -1;
     }
 
@@ -168,6 +208,6 @@ int main(){
     fwrite(imagedata, imageSize, 1, fileout);
 
     fclose(fileout);
-    free(imagedata);
+    munmap(imagedata, imageSize);
     return 0;
 }
