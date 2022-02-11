@@ -63,19 +63,20 @@ BYTE *decompress(char *filename, compressedformat *cfh, chunk *cdata, BITMAPINFO
     }
     fseek(filein, sizeof(compressedformat), SEEK_SET);
 
+    /* write data to output file */
     size_t padding = (24 * fih->biWidth + 31) / 32 * 4;
     size_t imageSize = padding * abs(fih->biHeight);
-
-    /* write data to output file */
-    int pos = 0;
-    while( fread(&cdata->color_index, sizeof(BYTE), 1, filein) != 0 ){
+    int pos = 0; // (fih->biWidth * fih->biHeight)
+    while(pos < imageSize){
+        fread(&cdata->color_index, sizeof(BYTE), 1, filein);
         fread(&cdata->count, sizeof(short), 1, filein);
 
+        //printf("%d \n", cdata->color_index);
         while(cdata->count){
             imagedata[pos + 0] = cfh->colors[cdata->color_index].b; // blue
             imagedata[pos + 1] = cfh->colors[cdata->color_index].g; // green
             imagedata[pos + 2] = cfh->colors[cdata->color_index].r; // red
-            pos++;
+            pos+=3;
             cdata->count--;
         }
 
@@ -87,7 +88,7 @@ BYTE *decompress(char *filename, compressedformat *cfh, chunk *cdata, BITMAPINFO
                 imagedata[pos + 2] = cfh->colors[cdata->color_index].r; // red
             }
         }*/
-        //printf("index: %d \n", cdata->color_index);
+        //printf("index: %d \n", pos);
     }
 
     fclose(filein);
@@ -143,13 +144,14 @@ int main(){
         return -1;
     }
     
-    for(int i = 0; i < cfh.palettecolors; i++){
+    /* check colors and index */
+    /*for(int i = 0; i < cfh.palettecolors; i++){
         printf("index: %d \n", i);
         printf("red: %d \n", cfh.colors[i].r);
         printf("green: %d \n", cfh.colors[i].g);
         printf("blue: %d \n", cfh.colors[i].b);
         putchar('\n');
-    }
+    }*/
 
     FILE *fileout;
     fileout = fopen("outfile.bmp", "wb");
@@ -165,7 +167,7 @@ int main(){
     fwrite(&fih, fih.biSize, 1, fileout);
     fwrite(imagedata, imageSize, 1, fileout);
 
-    free(imagedata);
     fclose(fileout);
+    free(imagedata);
     return 0;
 }
