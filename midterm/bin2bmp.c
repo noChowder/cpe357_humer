@@ -19,11 +19,11 @@ typedef struct chunk{
     short count;    // how many pixel of the same color from color_index are continuously appearing
 }chunk;
 
-int readCompressed(char *filename, compressedformat *compressedFileHeader){
+int readCompressedHeader(char *fileName, compressedformat *compressedFileHeader){
     FILE *fp;
-    fp = fopen(filename, "rb");
+    fp = fopen(fileName, "rb");
     if(fp == NULL){
-        printf("Cannot read %s \n", filename);
+        printf("Cannot read %s \n", fileName);
         return -1;
     }
 
@@ -37,16 +37,39 @@ int readCompressed(char *filename, compressedformat *compressedFileHeader){
     return 0;
 }
 
-int main(){
-    compressedformat cfh;
-    compressedformat cfih;
-
-    int check = readCompressed("compressed.bin", &cfh);
-    if(check){
-        perror("readCompressed() failed");
+int readCompressedData(char *fileName, chunk *data){
+    FILE *fp;
+    fp = fopen(fileName, "rb");
+    if(fp == NULL){
+        printf("Cannot read %s \n", fileName);
         return -1;
     }
-    for(int i = 0; i < sizeof(cfh.colors); i++){
+    fseek(fp, sizeof(compressedformat), SEEK_SET);
+
+    while( fread(&data->color_index, sizeof(BYTE), 1, fp) != 0 ){
+        fread(&data->count, sizeof(short), 1, fp);
+    }
+
+    fclose(fp);
+    return 0;
+}
+
+int main(){
+    compressedformat cfh;
+    chunk cdata;
+
+    int check_compressedHeader = readCompressedHeader("compressed.bin", &cfh);
+    if(check_compressedHeader){
+        perror("readCompressedHeader() failed");
+        return -1;
+    }
+    int check_compressedData = readCompressedData("compressed.bin", &cdata);
+    if(check_compressedData){
+        perror("readCompressedData() failed");
+        return -1;
+    }
+    
+    for(int i = 0; i < cfh.palettecolors; i++){
         printf("index: %d \n", i);
         printf("red: %d \n", cfh.colors[i].r);
         printf("green: %d \n", cfh.colors[i].g);
