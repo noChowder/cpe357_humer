@@ -67,17 +67,26 @@ BYTE *decompress(char *filename, compressedformat *cfh, chunk *cdata, BITMAPINFO
     size_t imageSize = padding * abs(fih->biHeight);
 
     /* write data to output file */
+    int pos = 0;
     while( fread(&cdata->color_index, sizeof(BYTE), 1, filein) != 0 ){
         fread(&cdata->count, sizeof(short), 1, filein);
 
-        for(int y = 0; y < abs(fih->biHeight); y++){
+        while(cdata->count){
+            imagedata[pos + 0] = cfh->colors[cdata->color_index].b; // blue
+            imagedata[pos + 1] = cfh->colors[cdata->color_index].g; // green
+            imagedata[pos + 2] = cfh->colors[cdata->color_index].r; // red
+            pos++;
+            cdata->count--;
+        }
+
+        /*for(int y = 0; y < abs(fih->biHeight); y++){
             for(int x = 0; x < fih->biWidth; x++){
                 size_t pos = padding * y + 3 * x;
                 imagedata[pos + 0] = cfh->colors[cdata->color_index].b; // blue
                 imagedata[pos + 1] = cfh->colors[cdata->color_index].g; // green
                 imagedata[pos + 2] = cfh->colors[cdata->color_index].r; // red
             }
-        }
+        }*/
         //printf("index: %d \n", cdata->color_index);
     }
 
@@ -134,29 +143,19 @@ int main(){
         return -1;
     }
     
-    /*
     for(int i = 0; i < cfh.palettecolors; i++){
         printf("index: %d \n", i);
         printf("red: %d \n", cfh.colors[i].r);
         printf("green: %d \n", cfh.colors[i].g);
         printf("blue: %d \n", cfh.colors[i].b);
         putchar('\n');
-    }*/
+    }
 
     FILE *fileout;
     fileout = fopen("outfile.bmp", "wb");
     if(fileout == NULL){
         return -1;
     }
-    
-    /*for(int y = 0; y < abs(fih.biHeight); y++){
-        for(int x = 0; x < fih.biWidth; x++){
-            size_t pos = padding * y + 3 * x;
-            imagedata[pos + 0] = 255; // blue
-            imagedata[pos + 1] = 255; // green
-            imagedata[pos + 2] = 255; // red
-        }
-    }*/
 
     fwrite(&fh.bfType, sizeof(WORD), 1, fileout);
     fwrite(&fh.bfSize, sizeof(DWORD), 1, fileout);
