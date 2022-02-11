@@ -3,8 +3,6 @@
 #include <string.h>
 #include "bmpheaders.h"
 
-typedef unsigned char BYTE;
-
 typedef struct col{
     int r, g, b;    // red, green, blue, in that order. values not to exceed 255
 }col;
