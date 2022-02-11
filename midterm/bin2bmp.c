@@ -141,7 +141,7 @@ int main(){
         }
     }
     else if(f1 == 0 && f2 > 0){
-        wait(0);
+        //wait(0);
         //printf("process 2\n");
         pos = imageSize/2;
         end = imageSize/4*3;
@@ -152,7 +152,7 @@ int main(){
         }
     }
     else if(f1 > 0 && f2 == 0){
-        wait(0);
+        //wait(0);
         //printf("process 3\n");
         pos = imageSize/4;
         end = imageSize/2;
@@ -163,7 +163,7 @@ int main(){
         }
     }
     else if(f1 == 0 && f2 == 0){
-        wait(0);
+        //wait(0);
         //printf("process 4\n");
         pos = 0;
         end = imageSize/4;
