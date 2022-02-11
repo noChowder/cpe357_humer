@@ -54,35 +54,35 @@ int readCompressedData(char *filename, chunk *data){
     return 0;
 }
 
-int decompress(char *filename, compressedformat *cfh, chunk *cdata, BITMAPFILEHEADER *fh, BITMAPINFOHEADER *fih){
+BYTE *decompress(char *filename, compressedformat *cfh, chunk *cdata, BITMAPINFOHEADER *fih, BYTE *imagedata){
     FILE *filein;
     filein = fopen(filename, "rb");
     if(filein == NULL){
         printf("Cannot read %s \n", filename);
-        return -1;
+        return NULL;
     }
     fseek(filein, sizeof(compressedformat), SEEK_SET);
 
-    /* write headers to output file */
-    FILE *fileout;
-    fileout = fopen("outfile.bmp", "wb");
-    fwrite(&fh->bfType, sizeof(WORD), 1, fileout);
-    fwrite(&fh->bfSize, sizeof(DWORD), 1, fileout);
-    fwrite(&fh->bfReserved1, sizeof(WORD), 1, fileout);
-    fwrite(&fh->bfReserved2, sizeof(WORD), 1, fileout);
-    fwrite(&fh->bfOffBits, sizeof(DWORD), 1, fileout);
-    fwrite(&fih, sizeof(BITMAPINFOHEADER), 1, fileout);
+    size_t padding = (24 * fih->biWidth + 31) / 32 * 4;
+    size_t imageSize = padding * abs(fih->biHeight);
 
     /* write data to output file */
     while( fread(&cdata->color_index, sizeof(BYTE), 1, filein) != 0 ){
         fread(&cdata->count, sizeof(short), 1, filein);
 
-        
+        for(int y = 0; y < abs(fih->biHeight); y++){
+            for(int x = 0; x < fih->biWidth; x++){
+                size_t pos = padding * y + 3 * x;
+                imagedata[pos + 0] = cfh->colors[cdata->color_index].b; // blue
+                imagedata[pos + 1] = cfh->colors[cdata->color_index].g; // green
+                imagedata[pos + 2] = cfh->colors[cdata->color_index].r; // red
+            }
+        }
+        //printf("index: %d \n", cdata->color_index);
     }
 
     fclose(filein);
-    fclose(fileout);
-    return 0;
+    return imagedata;
 }
 
 int main(){
@@ -103,27 +103,33 @@ int main(){
     }
 
     /* file header info */          // given
-    fh.bfType = (WORD) 19778;
-    fh.bfSize = (DWORD) 4320054;
-    fh.bfReserved1 = (DWORD) 0;
-    fh.bfReserved2 = (WORD) 0;
-    fh.bfOffBits = (DWORD) 54;
+    fh.bfType = (WORD)19778;
+    fh.bfSize = (DWORD)4320054;
+    fh.bfReserved1 = (DWORD)0;
+    fh.bfReserved2 = (WORD)0;
+    fh.bfOffBits = (DWORD)54;
     
     /* file infoheader info */      // given
-    fih.biSize = (DWORD) 40;
-    fih.biWidth = (LONG) 1200;
-    fih.biHeight = (LONG) 1200;
-    fih.biPlanes = (WORD) 1;
-    fih.biBitCount = (WORD) 24;
-    fih.biCompression = (DWORD) 0;
-    fih.biSizeImage = (DWORD) 4320000;
-    fih.biXPelsPerMeter = (LONG) 3780;
-    fih.biYPelsPerMeter = (LONG) 3780;
-    fih.biClrUsed = (DWORD) 0;
-    fih.biClrImportant = (DWORD) 0;
+    fih.biSize = (DWORD)40;
+    fih.biWidth = (LONG)1200;
+    fih.biHeight = (LONG)1200;
+    fih.biPlanes = (WORD)1;
+    fih.biBitCount = (WORD)24;
+    fih.biCompression = (DWORD)0;
+    fih.biSizeImage = (DWORD)4320000;
+    fih.biXPelsPerMeter = (LONG)3780;
+    fih.biYPelsPerMeter = (LONG)3780;
+    fih.biClrUsed = (DWORD)0;
+    fih.biClrImportant = (DWORD)0;
 
-    int check_decompress = decompress("compressed.bin", &cfh, &cdata, &fh, &fih);
-    if(check_decompress){
+    size_t padding = (24 * fih.biWidth + 31) / 32 * 4;
+    size_t imageSize = padding * abs(fih.biHeight);
+    BYTE *imagedata = (BYTE *)malloc(imageSize);
+    if(imagedata == NULL){
+        return -1;
+    }
+    imagedata = decompress("compressed.bin", &cfh, &cdata, &fih, imagedata);
+    if(!imagedata){
         perror("decompress() failed");
         return -1;
     }
@@ -137,5 +143,30 @@ int main(){
         putchar('\n');
     }*/
 
+    FILE *fileout;
+    fileout = fopen("outfile.bmp", "wb");
+    if(fileout == NULL){
+        return -1;
+    }
+    
+    /*for(int y = 0; y < abs(fih.biHeight); y++){
+        for(int x = 0; x < fih.biWidth; x++){
+            size_t pos = padding * y + 3 * x;
+            imagedata[pos + 0] = 255; // blue
+            imagedata[pos + 1] = 255; // green
+            imagedata[pos + 2] = 255; // red
+        }
+    }*/
+
+    fwrite(&fh.bfType, sizeof(WORD), 1, fileout);
+    fwrite(&fh.bfSize, sizeof(DWORD), 1, fileout);
+    fwrite(&fh.bfReserved1, sizeof(WORD), 1, fileout);
+    fwrite(&fh.bfReserved2, sizeof(WORD), 1, fileout);
+    fwrite(&fh.bfOffBits, sizeof(DWORD), 1, fileout);
+    fwrite(&fih, fih.biSize, 1, fileout);
+    fwrite(imagedata, imageSize, 1, fileout);
+
+    free(imagedata);
+    fclose(fileout);
     return 0;
 }
