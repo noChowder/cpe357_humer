@@ -107,8 +107,8 @@ int main(){
     for(int sig = 1; sig < 65; sig++){
         signal(sig, signalhandler1);
     }
-    signal(SIGALRM, signalhandler2);
-    int parent_pid = getpid();
+    //signal(SIGALRM, signalhandler2);
+    //int parent_pid = getpid();
     //printf("Parent pid: \t\t%d \n", parent_pid);
     int *child_pid = (int *)mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_ANON | MAP_SHARED, -1, 0);
     time_t T = time(NULL);

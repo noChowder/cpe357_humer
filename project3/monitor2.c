@@ -14,16 +14,24 @@
 int child_process(){
     char input[1000];
     printf("\033[0;34m");
-    printf("stat_prog");
+    printf("monitor2");
     printf("\033[0;m");
     printf("$ ");
+    //alarm(3);
+    //T = time(NULL);
+    //*tm = *localtime(&T);
+    //*old_sec = tm->tm_sec;
+    //printf("Local time is: \t\t%d:%d:%d \n", tm->tm_hour, tm->tm_min, tm->tm_sec);
     fgets(input, 1000, stdin);
+    //alarm(0);
+    //T = time(NULL);
+    //*tm = *localtime(&T);
     if((strlen(input) > 0) && (input[strlen(input) - 1] == '\n')){
         input[strlen(input) - 1] = '\0';
     }
     /* end program */
     if(strcmp(input, "q") == 0){
-        printf("\nProgram finished successfully. \n");
+        printf("Program finished successfully. \n");
         return 0;
     }
     /* list cwd */
@@ -88,13 +96,39 @@ int child_process(){
     return 0;
 }
 
+void signalhandler1(int sig){
+    printf("Termination not possible \n");
+}
+void signalhandler2(int sig){
+    printf("in here \n");
+}
+
 int main(){
-    if(fork() == 0){
-        child_process();
+    for(int sig = 1; sig < 65; sig++){
+        signal(sig, signalhandler1);
     }
-    else{
+    //signal(SIGALRM, signalhandler2);
+    //int parent_pid = getpid();
+    //printf("Parent pid: \t\t%d \n", parent_pid);
+    int *child_pid = (int *)mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_ANON | MAP_SHARED, -1, 0);
+    //time_t T = time(NULL);
+    //struct tm *tm = (struct tm *)mmap(NULL, sizeof(struct tm), PROT_READ | PROT_WRITE, MAP_ANON | MAP_SHARED, -1, 0);
+    //int *old_sec = (int *)mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_ANON | MAP_SHARED, -1, 0);
+    int f1 = fork();
+
+    while(f1 == 0){
+        if(child_process() == 0){
+            kill(*child_pid, SIGKILL);
+        }
+    }
+    if(f1 > 0){
         wait(0);
+        sleep(10);
+        main();
     }
 
+    munmap(child_pid, sizeof(int));
+    //munmap(tm, sizeof(struct tm));
+    //munmap(old_sec, sizeof(int));
     return 0;
 }
