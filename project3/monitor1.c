@@ -14,9 +14,10 @@
 int child_process(){
     char input[1000];
     printf("\033[0;34m");
-    printf("stat_prog");
+    printf("monitor1");
     printf("\033[0;m");
     printf("$ ");
+    alarm(10);
     fgets(input, 1000, stdin);
     if((strlen(input) > 0) && (input[strlen(input) - 1] == '\n')){
         input[strlen(input) - 1] = '\0';
@@ -88,11 +89,34 @@ int child_process(){
     return 0;
 }
 
+void signalhandler1(int sig){
+    printf("Termination not possible \n");
+}
+void signalhandler2(int sig){
+    printf("in here \n");
+}
+
 int main(){
+    for(int sig = 1; sig < 65; sig++){
+        signal(sig, signalhandler1);
+    }
+    signal(SIGALRM, signalhandler2);
+    int parent_pid = getpid();
+    //printf("Parent pid: \t\t%d \n", parent_pid);
+    int *child_pid = (int *)mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_ANON | MAP_SHARED, -1, 0);
+    
     if(fork() == 0){
         child_process();
     }
     else{
+        int on = 1;
+        while(on){
+            sleep(10);
+            if(on){ // child inactive
+                //kill(*child_pid, SIGKILL);
+                on = 0;
+            }
+        }
         wait(0);
     }
 
