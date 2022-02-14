@@ -11,20 +11,27 @@
 #include <sys/sysmacros.h>
 #include <sys/stat.h>
 
-int child_process(){
+int child_process(time_t T, struct tm *tm, int *old_sec){
     char input[1000];
     printf("\033[0;34m");
     printf("monitor1");
     printf("\033[0;m");
     printf("$ ");
-    alarm(10);
+    //alarm(3);
+    T = time(NULL);
+    *tm = *localtime(&T);
+    *old_sec = tm->tm_sec;
+    //printf("Local time is: \t\t%d:%d:%d \n", tm->tm_hour, tm->tm_min, tm->tm_sec);
     fgets(input, 1000, stdin);
+    //alarm(0);
+    T = time(NULL);
+    *tm = *localtime(&T);
     if((strlen(input) > 0) && (input[strlen(input) - 1] == '\n')){
         input[strlen(input) - 1] = '\0';
     }
     /* end program */
     if(strcmp(input, "q") == 0){
-        printf("\nProgram finished successfully. \n");
+        printf("Program finished successfully. \n");
         return 0;
     }
     /* list cwd */
@@ -42,7 +49,7 @@ int child_process(){
         }
         putchar('\n');
         closedir(dir);
-        if(child_process() == 0){
+        if(child_process(T, tm, old_sec) == 0){
             return 0;
         }
     }
@@ -52,7 +59,7 @@ int child_process(){
     if(ret != 0){
         perror(__FUNCTION__);
         putchar('\n');
-        if(child_process() == 0){
+        if(child_process(T, tm, old_sec) == 0){
             return 0;
         }
     }
@@ -83,7 +90,7 @@ int child_process(){
                 printf("Last file modification:   %s", ctime(&sb.st_mtime));
 
     putchar('\n');
-    if(child_process() == 0){
+    if(child_process(T, tm, old_sec) == 0){
         return 0;
     }
     return 0;
@@ -104,21 +111,36 @@ int main(){
     int parent_pid = getpid();
     //printf("Parent pid: \t\t%d \n", parent_pid);
     int *child_pid = (int *)mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_ANON | MAP_SHARED, -1, 0);
-    
+    time_t T = time(NULL);
+    struct tm *tm = (struct tm *)mmap(NULL, sizeof(struct tm), PROT_READ | PROT_WRITE, MAP_ANON | MAP_SHARED, -1, 0);
+    int *old_sec = (int *)mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_ANON | MAP_SHARED, -1, 0);
+
     if(fork() == 0){
-        child_process();
+        if(child_process(T, tm, old_sec) == 0){
+            kill(*child_pid, SIGKILL);
+        }
     }
     else{
-        int on = 1;
-        while(on){
-            sleep(10);
-            if(on){ // child inactive
-                //kill(*child_pid, SIGKILL);
-                on = 0;
+        while(1){
+            //sleep(10);
+            T = time(NULL);
+            *tm = *localtime(&T);
+            int timediff = abs(tm->tm_sec - *old_sec);
+            if(*old_sec >= 50){
+                int adjusted_sec = tm->tm_sec + 60;
+                timediff = abs(adjusted_sec - *old_sec);
+            }
+            if(timediff >= 10){
+                //printf("Elapsed time: \t\t%d sec\n", timediff);
+                printf("Child inactive, terminating process. \n");
+                kill(*child_pid, SIGKILL);
             }
         }
         wait(0);
     }
 
+    munmap(child_pid, sizeof(int));
+    munmap(tm, sizeof(struct tm));
+    munmap(old_sec, sizeof(int));
     return 0;
 }
