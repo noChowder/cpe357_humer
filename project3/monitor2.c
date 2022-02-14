@@ -114,14 +114,13 @@ int main(){
     //time_t T = time(NULL);
     //struct tm *tm = (struct tm *)mmap(NULL, sizeof(struct tm), PROT_READ | PROT_WRITE, MAP_ANON | MAP_SHARED, -1, 0);
     //int *old_sec = (int *)mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_ANON | MAP_SHARED, -1, 0);
-    int f1 = fork();
 
-    while(f1 == 0){
+    if(fork() == 0){
         if(child_process() == 0){
             kill(*child_pid, SIGKILL);
         }
     }
-    if(f1 > 0){
+    else{
         wait(0);
         sleep(10);
         main();
