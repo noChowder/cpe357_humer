@@ -13,8 +13,10 @@
 
 int child_process(){
     char input[1000];
+    char path[1000];
+    getcwd(path, 1000);
     printf("\033[0;34m");
-    printf("monitor2");
+    printf("monitor1 .%s", path);
     printf("\033[0;m");
     printf("$ ");
     //alarm(3);
@@ -49,6 +51,26 @@ int child_process(){
         }
         putchar('\n');
         closedir(dir);
+        if(child_process() == 0){
+            return 0;
+        }
+    }
+    else if(strcmp(input, "..") == 0){
+        strcat(path, "/..");
+        if(chdir(path) != 0){
+            perror("chdir() failed");
+            putchar('\n');
+        }
+        if(child_process() == 0){
+            return 0;
+        }
+    }
+    else if((strlen(input) > 0) && (input[0] == '/')){
+        strcat(path, input);
+        if(chdir(path) != 0){
+            perror("chdir() failed");
+            putchar('\n');
+        }
         if(child_process() == 0){
             return 0;
         }

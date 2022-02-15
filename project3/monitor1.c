@@ -13,8 +13,10 @@
 
 int child_process(time_t T, struct tm *tm, int *old_sec){
     char input[1000];
+    char path[1000];
+    getcwd(path, 1000);
     printf("\033[0;34m");
-    printf("monitor1");
+    printf("monitor1 .%s", path);
     printf("\033[0;m");
     printf("$ ");
     //alarm(3);
@@ -26,6 +28,7 @@ int child_process(time_t T, struct tm *tm, int *old_sec){
     //alarm(0);
     T = time(NULL);
     *tm = *localtime(&T);
+    *old_sec = tm->tm_sec;
     if((strlen(input) > 0) && (input[strlen(input) - 1] == '\n')){
         input[strlen(input) - 1] = '\0';
     }
@@ -49,6 +52,26 @@ int child_process(time_t T, struct tm *tm, int *old_sec){
         }
         putchar('\n');
         closedir(dir);
+        if(child_process(T, tm, old_sec) == 0){
+            return 0;
+        }
+    }
+    else if(strcmp(input, "..") == 0){
+        strcat(path, "/..");
+        if(chdir(path) != 0){
+            perror("chdir() failed");
+            putchar('\n');
+        }
+        if(child_process(T, tm, old_sec) == 0){
+            return 0;
+        }
+    }
+    else if((strlen(input) > 0) && (input[0] == '/')){
+        strcat(path, input);
+        if(chdir(path) != 0){
+            perror("chdir() failed");
+            putchar('\n');
+        }
         if(child_process(T, tm, old_sec) == 0){
             return 0;
         }
@@ -115,6 +138,8 @@ int main(){
     struct tm *tm = (struct tm *)mmap(NULL, sizeof(struct tm), PROT_READ | PROT_WRITE, MAP_ANON | MAP_SHARED, -1, 0);
     int *old_sec = (int *)mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_ANON | MAP_SHARED, -1, 0);
 
+    *tm = *localtime(&T);
+    *old_sec = tm->tm_sec;
     if(fork() == 0){
         if(child_process(T, tm, old_sec) == 0){
             kill(*child_pid, SIGKILL);
@@ -125,13 +150,14 @@ int main(){
             //sleep(10);
             T = time(NULL);
             *tm = *localtime(&T);
-            int timediff = abs(tm->tm_sec - *old_sec);
+            int timediff = 0;
+            timediff = abs(tm->tm_sec - *old_sec);
             if(*old_sec >= 50){
                 int adjusted_sec = tm->tm_sec + 60;
                 timediff = abs(adjusted_sec - *old_sec);
             }
-            if(timediff >= 10){
-                //printf("Elapsed time: \t\t%d sec\n", timediff);
+            if(timediff == 10){
+                printf("Elapsed time: \t%d sec\n", timediff);
                 printf("Child inactive, terminating process. \n");
                 kill(*child_pid, SIGKILL);
             }
