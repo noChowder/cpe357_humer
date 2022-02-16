@@ -157,7 +157,7 @@ int main(){
                 timediff = abs(adjusted_sec - *old_sec);
             }
             if(timediff == 10){
-                printf("Elapsed time: \t%d sec\n", timediff);
+                //printf("Elapsed time: \t%d sec\n", timediff);         // inactivity time, should be 10 sec
                 printf("Child inactive, terminating process. \n");
                 kill(*child_pid, SIGKILL);
             }
