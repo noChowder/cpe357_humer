@@ -10,4 +10,23 @@ int main(){
 
     char *text = mmap(NULL, 1000, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
     
+    if(fork() == 0){
+        for(int i = 0; ; i++){
+            
+            if(i%2 == 0){
+                strcpy(text, einstein1);
+            }
+            else{
+                strcpy(text, einstein2);
+            }
+        }
+        return 0;
+    }
+    while(1){
+        char outtext[100];
+        strcpy(outtext, text);
+        printf("%s \n", outtext);
+    }
+
+    return 0;
 }
