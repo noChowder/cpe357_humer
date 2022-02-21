@@ -10,14 +10,13 @@ int main(){
 
     char *text = (char *)mmap(NULL, 1000, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
     
-    /* peterson's alg */
     int *flag = (int *)mmap(NULL, 2*sizeof(int), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);    
     int *turn = (int *)mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
     *flag = *(flag+1) = 0; // 0 idle, 1 waiting, 2 active
     *turn = 0;
-    
 
     if(fork() == 0){
+        
         for(int i = 0; ; i++){
             while(1){
                 *flag = 1;
@@ -38,8 +37,8 @@ int main(){
                 if((index >= 2) && ((*turn == 0) || (*(flag+*turn) == 0))){
                     break;
                 }
-            }
-
+            }            
+            
             if(i%2 == 0){
                 *turn = 0;
                 strcpy(text, einstein1);
@@ -49,21 +48,26 @@ int main(){
                 }
                 *turn = index;
                 *flag = 0;
+                
             }
             else{
                 *turn = 0;
                 strcpy(text, einstein2);
-                int index = (*(turn)+1) % 2;
+                int index = (*turn+1) % 2;
                 while(*(flag+index) == 0){
                     index = (index+1) % 2;
                 }
                 *turn = index;
                 *flag = 0;
             }
+            
         }
     }
     else{
+        
+        
         while(1){
+            while(1){
                 *(flag+1) = 1;
                 int index = *turn;
                 while(index != 1){
@@ -79,11 +83,11 @@ int main(){
                 while((index < 2) && ((index == 1) || (*(flag+index) != 2))){
                     index = index+1;
                 }
-                if((index >= 2) && ((*turn == 0) || (*(flag+*turn) == 0))){
+                if((index >= 2) && ((*turn == 1) || (*(flag+*turn) == 0))){
                     break;
                 }
             }
-        while(1){
+            
             *turn = 1;
             char outtext[100];
             strcpy(outtext, text);
