@@ -1,2 +1,1 @@
-
-    }
+mywrite(&pipeA, "and now we test the carryover", 30);

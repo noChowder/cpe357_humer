@@ -25,7 +25,7 @@ void init_pipe(mypipe *pipe, int size){
 }
 
 int mywrite(mypipe *pipe, byte *buffer, int size){
-    if((pipe->buffersize > size) && ((pipe->end_occupied - pipe->start_occupied) == 0)){
+    if((pipe->buffersize >= size) && (pipe->end_occupied == 0)){
         for(int i = 0; i < size; i++){
             *(pipe->pipebuffer + i) = *(buffer + i);
         }
@@ -34,15 +34,27 @@ int mywrite(mypipe *pipe, byte *buffer, int size){
         return size;
     }
     else{
-        if((pipe->buffersize > size) && ((pipe->end_occupied + size) <= pipe->buffersize)){
+        /* no carryover */
+        if((pipe->buffersize >= size) && ((pipe->end_occupied + size) <= pipe->buffersize)){
             for(int i = pipe->end_occupied; i < (pipe->end_occupied + size); i++){
                 *(pipe->pipebuffer + i) = *(buffer + (i-pipe->end_occupied));
             }
             pipe->end_occupied = (pipe->end_occupied + size);
             return size;
         }
+        /* carryover */
+        else if((pipe->buffersize >= size) && ((pipe->end_occupied + size) > pipe->buffersize)){
+            for(int i = pipe->end_occupied; i < (pipe->end_occupied + size); i++){
+                *(pipe->pipebuffer + i) = *(buffer + (i-pipe->end_occupied));
+            }
+            for(int i = 0; i < (size - (pipe->buffersize - pipe->end_occupied)); i++){
+                *(pipe->pipebuffer + i) = *(buffer + (pipe->buffersize - pipe->end_occupied + i));
+            }
+            pipe->end_occupied = (size - (pipe->buffersize - pipe->end_occupied));
+            return size;
+        }
         else{
-            perror("not enough space");
+            perror("can't write");
             return -1;
         }
 
@@ -51,19 +63,24 @@ int mywrite(mypipe *pipe, byte *buffer, int size){
 }
 
 int myread(mypipe *pipe, byte *buffer, int size){
-    if((pipe->buffersize > size) && ((pipe->end_occupied - pipe->start_occupied) > 0)){
+    if((pipe->buffersize >= size) && ((pipe->end_occupied - pipe->start_occupied) > 0)){
         for(int i = pipe->start_occupied; i < (pipe->start_occupied + size); i++){
             *(buffer + (i-pipe->start_occupied)) = *(pipe->pipebuffer + i);
         }
-        pipe->start_occupied = size;
+        pipe->start_occupied = (pipe->start_occupied + size);
         return size;
     }
     else{
-        if((pipe->buffersize > size)){
-
+        if((pipe->buffersize >= size) && ((pipe->end_occupied - pipe->start_occupied) <= 0)){
+            for(int i = pipe->start_occupied; i < pipe->buffersize; i++){
+                *(buffer + (i-pipe->start_occupied)) = *(pipe->pipebuffer + i);
+            }
+            for(int i = 0; i < pipe->end_occupied; i++){
+                *(buffer + (pipe->buffersize - pipe->start_occupied + i)) = *(pipe->pipebuffer + i);
+            }
         }
         else{
-            perror("not enough space");
+            perror("can't read");
             return -1;
         }
 
@@ -84,7 +101,7 @@ void main(){
     myread(&pipeA, text, 16);
     printf("%s \n", text);
 
-    //mywrite(&pipeA, "and now we test the carryover", 30);
-    //myread(&pipeA, text, 30);
-    //printf("%s \n", text);
+    mywrite(&pipeA, "and now we test the carryover", 30);
+    myread(&pipeA, text, 30);
+    printf("%s \n", text);
 }
