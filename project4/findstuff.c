@@ -30,7 +30,22 @@ int main(){
         close(fd[1]);
         dup2(save_usrinput, STDIN_FILENO);
         read(STDIN_FILENO, usrinput, 100);
-        printf("%s \n", usrinput);
+        //printf("%s \n", usrinput);
+        char *args[4];
+        for(int i = 0; i < 4; i++)
+            args[i] = (char *)malloc(20);
+        char *cmds = strtok(usrinput, " \n");
+        int i;
+        while(cmds != NULL){
+            args[i] = cmds;
+            i++;
+            cmds = strtok(NULL, " \n");
+        }
+        if(i > 5){
+            fprintf(stderr, "Too many args, stopping \n");
+            return -1;
+        }
+        printf("%s", args[1]);
         close(fd[0]);
         wait(0);
     }
