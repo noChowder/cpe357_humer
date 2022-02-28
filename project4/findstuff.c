@@ -21,31 +21,36 @@ int main(){
     dup2(fd[0], STDIN_FILENO);
 
     if(fork() == 0){
+        close(fd[0]);
         printf("\033[0;34m");
+        //write(fd[1], "findstuff$ ", 12);
         printf("findstuff$ ");
         printf("\033[0;m");
+        close(fd[1]);
         return 0;
     }
     else{
         close(fd[1]);
         dup2(save_usrinput, STDIN_FILENO);
         read(STDIN_FILENO, usrinput, 100);
-        //printf("%s \n", usrinput);
+        //printf("%s", usrinput);
         char *args[4];
-        for(int i = 0; i < 4; i++)
-            args[i] = (char *)malloc(20);
-        char *cmds = strtok(usrinput, " \n");
-        int i;
+        //for(int i = 0; i < 4; i++)
+        //    args[i] = (char *)malloc(20);
+        char *cmds = strtok(usrinput, " ");
+        int i = 0;
         while(cmds != NULL){
-            args[i] = cmds;
-            i++;
+            if(i == 4){
+                fprintf(stderr, "Too many args, stopping \n");
+                return -1;
+            }
+            args[i++] = cmds;
             cmds = strtok(NULL, " \n");
         }
-        if(i > 5){
-            fprintf(stderr, "Too many args, stopping \n");
-            return -1;
+        for(i = 0; i < 4; i++){
+            printf("%s \n", args[i]);
         }
-        printf("%s", args[1]);
+        //printf("%s \n", args[1]);
         close(fd[0]);
         wait(0);
     }
