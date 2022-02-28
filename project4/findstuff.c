@@ -11,9 +11,9 @@
 #include <string.h>
 
 int main(){
-    char usrinput[100];
+    char *usrinput = mmap(NULL, 100, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
     //printf("\033[0;34m");
-    //printf("findstuff$");
+    //printf("findstuff$ ");
     //printf("\033[0;m");
     int fd[2];
     pipe(fd);
@@ -31,13 +31,16 @@ int main(){
     }
     else{
         close(fd[1]);
+        //read(STDIN_FILENO, usrinput, 12);
+        //printf("\033[0;34m");
+        //printf("%s ", usrinput);
+        //printf("\033[0;m");
+
         dup2(save_usrinput, STDIN_FILENO);
         read(STDIN_FILENO, usrinput, 100);
-        //printf("%s", usrinput);
+        size_t len = strlen(usrinput);
         char *args[4];
-        //for(int i = 0; i < 4; i++)
-        //    args[i] = (char *)malloc(20);
-        char *cmds = strtok(usrinput, " ");
+        char *cmds = strtok(usrinput, " \n");
         int i = 0;
         while(cmds != NULL){
             if(i == 4){
@@ -47,13 +50,10 @@ int main(){
             args[i++] = cmds;
             cmds = strtok(NULL, " \n");
         }
-        for(i = 0; i < 4; i++){
-            printf("%s \n", args[i]);
-        }
-        //printf("%s \n", args[1]);
         close(fd[0]);
         wait(0);
     }
-
+    
+    munmap(usrinput, 100);
     return 0;
 }
