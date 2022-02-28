@@ -40,6 +40,9 @@ int main(){
         read(STDIN_FILENO, usrinput, 100);
         size_t len = strlen(usrinput);
         char *args[4];
+        for(int i = 0; i < 4; i++){
+            args[i] = malloc(20 * sizeof(char));
+        }
         char *cmds = strtok(usrinput, " \n");
         int i = 0;
         while(cmds != NULL){
@@ -47,7 +50,7 @@ int main(){
                 fprintf(stderr, "Too many args, stopping \n");
                 return -1;
             }
-            args[i++] = cmds;
+            strcpy(args[i++], cmds);
             cmds = strtok(NULL, " \n");
         }
 
@@ -69,17 +72,24 @@ int main(){
             }
             else{
                 while(1){
-                    sleep(1);
+                    //sleep(1);
                     int ret = waitpid(child_pid, &status, WNOHANG);
                     if(ret > 0){
                         printf("child %d returned \n", *child_count);
                         *child_count = *child_count - 1;
-                        kill(child_pid, SIGKILL);
                         break;
                     }
                 }
+                kill(child_pid, SIGKILL);
+                //return 0;
             }
         }
+        
+        for(int i = 0; i < 4; i++){
+            //printf("%s \n", args[i]);
+            free(args[i]);
+        }
+        
         close(fd[0]);
         waitpid(prompt, &status, 0);
         kill(prompt, SIGKILL);
