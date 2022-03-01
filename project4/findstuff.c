@@ -116,10 +116,9 @@ int sub_find_string(char *text, struct dirent *entry, char *path, int match){
             strcpy(tempPath, path);
             strcat(tempPath, "/");
             strcat(tempPath, sentry->d_name);
-            printf("here: %s \n", tempPath);
+            //printf("here: %s \n", tempPath);
             match = sub_find_file(text, sentry, tempPath, match);
         }
-        /*
         FILE *fp;
         //printf("%s \n", entry->d_name);
         fp = fopen(sentry->d_name, "rb");
@@ -143,7 +142,7 @@ int sub_find_string(char *text, struct dirent *entry, char *path, int match){
             }
             //fscanf(fp, "%s", buff);
         }            
-        free(buff);*/
+        free(buff);
     }
     closedir(dir);
     return match;
@@ -179,7 +178,9 @@ int find_string(char *text, char *flag1, char *flag2){
             if(strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0){
                 continue;
             }
-            match = sub_find_string(text, entry, path, match);
+            if(entry->d_type == 4){
+                match = sub_find_file(text, entry, path, match);
+            }
         }
         closedir(dir);
     }
@@ -382,7 +383,7 @@ int main(){
         }
         
         for(int i = 0; i < 4; i++){
-            //printf("%s \n", args[i]);
+            printf("%s \n", args[i]);
             free(args[i]);
         }
         
