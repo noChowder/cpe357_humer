@@ -22,7 +22,7 @@ int sub_find_file(char *file, struct dirent *entry, char *path, int match){
     DIR *dir;
     dir = opendir(path);
     if(!dir){
-        printf("%s \n", path);
+        //printf("%s \n", path);
         perror("opendir() failed");
         return -1;
     }
@@ -101,14 +101,16 @@ int find_file(char *file, char *flag){
 int sub_find_string(char *text, struct dirent *entry, char *path, int match){
     char tempPath[1000];
     DIR *dir;
+    //printf("here: %s \n", path);
     dir = opendir(path);
     if(!dir){
-        printf("%s \n", path);
+        //printf("%s \n", path);
         perror("opendir() failed");
         return -1;
     }
     struct dirent *sentry;
     //int match = 0;
+    //printf("%s \n", path);
     while((sentry = readdir(dir)) != NULL){
         //printf("%s \n", sentry->d_name);
         if(sentry->d_type == 4 && strcmp(sentry->d_name, ".") != 0 && strcmp(sentry->d_name, "..") != 0){
@@ -117,12 +119,16 @@ int sub_find_string(char *text, struct dirent *entry, char *path, int match){
             strcat(tempPath, "/");
             strcat(tempPath, sentry->d_name);
             //printf("here: %s \n", tempPath);
-            match = sub_find_file(text, sentry, tempPath, match);
+            match = sub_find_string(text, sentry, tempPath, match);
         }
         FILE *fp;
-        //printf("%s \n", entry->d_name);
-        fp = fopen(sentry->d_name, "rb");
+        //printf("%s \n", path);
+        strcpy(tempPath, path);
+        strcat(tempPath, "/");
+        strcat(tempPath, sentry->d_name);
+        fp = fopen(tempPath, "rb");
         if(!fp){
+            printf("%s \n", sentry->d_name);
             perror("fopen() failed");
             return -1;
         }
@@ -141,7 +147,8 @@ int sub_find_string(char *text, struct dirent *entry, char *path, int match){
                 break;
             }
             //fscanf(fp, "%s", buff);
-        }            
+        }
+        //fclose(fp);        
         free(buff);
     }
     closedir(dir);
@@ -159,6 +166,7 @@ int find_string(char *text, char *flag1, char *flag2){
     //printf("%s \n", text);
     char path[1000];
     getcwd(path, 1000);
+    //printf("%s \n", path);
     DIR *dir;
     int match = 0;
     struct dirent *entry;
@@ -168,7 +176,7 @@ int find_string(char *text, char *flag1, char *flag2){
         printf("flag1 is -f \n");
     }
     else if(strcmp(flag1, "-s") == 0){
-        printf("sub flag \n");
+        //printf("sub flag \n");
         dir = opendir(".");
         if(!dir){
             perror("opendir() failed");
@@ -179,7 +187,8 @@ int find_string(char *text, char *flag1, char *flag2){
                 continue;
             }
             if(entry->d_type == 4){
-                match = sub_find_file(text, entry, path, match);
+                //printf("%s \n", entry->d_name);
+                match = sub_find_string(text, entry, path, match);
             }
         }
         closedir(dir);
@@ -232,7 +241,7 @@ int find_string(char *text, char *flag1, char *flag2){
 }
 
 int main(){
-    char *usrinput = mmap(NULL, 100, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
+    //char *usrinput = mmap(NULL, 100, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
     Processes *p = mmap(NULL, sizeof(Processes), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
     p->numProcesses = 0;
 
@@ -253,6 +262,8 @@ int main(){
         return 0;
     }
     else{
+        char *usrinput;
+        usrinput = malloc(100*sizeof(char));
         close(fd[1]);
         dup2(save_usrinput, STDIN_FILENO);
         read(STDIN_FILENO, usrinput, 100);
@@ -383,9 +394,11 @@ int main(){
         }
         
         for(int i = 0; i < 4; i++){
-            printf("%s \n", args[i]);
+            //printf("%s \n", args[i]);
             free(args[i]);
+            //printf("%s \n", args[i]);
         }
+        free(usrinput);
         
         close(fd[0]);
         waitpid(prompt, &status, 0);
@@ -394,7 +407,7 @@ int main(){
     }
     }
     
-    munmap(usrinput, 100);
+    
     munmap(p, sizeof(int));
     return 0;
 }
