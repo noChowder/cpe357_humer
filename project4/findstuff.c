@@ -95,6 +95,14 @@ int finder(char *file, char *flag){
     return 0;
 }
 
+int find_string(char *text, char *flag1, char *flag2){
+    int match = 0;
+    if(match != 1){
+        return -1;
+    }
+    return 0;
+}
+
 int main(){
     char *usrinput = mmap(NULL, 100, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
     Processes *p = mmap(NULL, sizeof(Processes), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
@@ -157,10 +165,17 @@ int main(){
                 //printf("last char:  %s \n", args[1]+len-1);
                 //printf("first char: %c \n", *args[1]);
                 if( (strcmp(args[1]+len-1, "\"")) == 0 && (*args[1] == '\"') ){
-                    printf("string \n");
+                    //printf("string \n");
                     // if arg3 is -f
-                    // if arg4 is -s
+                    // if arg3 is -s
                     // if arg3 is -f and arg4 is -s
+                    //printf("%c \n", *(args[2]+1));
+                    if(*args[2] == '-' && *(args[2]+1) == 'f' && strcmp(args[3], "-s") == 0){
+                        if(find_string(args[1], args[2], args[3]) != 0){
+                            fprintf(stderr, ">nothing found< \n\n");
+                            return -1;
+                        }
+                    }
                     return 0;
                 }
                 else{
