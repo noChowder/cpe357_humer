@@ -98,6 +98,57 @@ int find_file(char *file, char *flag){
     return 0;
 }
 
+int sub_find_string(char *text, struct dirent *entry, char *path, int match){
+    char tempPath[1000];
+    DIR *dir;
+    dir = opendir(path);
+    if(!dir){
+        printf("%s \n", path);
+        perror("opendir() failed");
+        return -1;
+    }
+    struct dirent *sentry;
+    //int match = 0;
+    while((sentry = readdir(dir)) != NULL){
+        //printf("%s \n", sentry->d_name);
+        if(sentry->d_type == 4 && strcmp(sentry->d_name, ".") != 0 && strcmp(sentry->d_name, "..") != 0){
+            //printf("%s \n", file);
+            strcpy(tempPath, path);
+            strcat(tempPath, "/");
+            strcat(tempPath, sentry->d_name);
+            printf("here: %s \n", tempPath);
+            match = sub_find_file(text, sentry, tempPath, match);
+        }
+        /*
+        FILE *fp;
+        //printf("%s \n", entry->d_name);
+        fp = fopen(sentry->d_name, "rb");
+        if(!fp){
+            perror("fopen() failed");
+            return -1;
+        }
+        char *buff;
+        buff = malloc(255*sizeof(char));
+        //fscanf(fp, "%s", buff);
+        //printf("%s \n", buff);
+        while(fscanf(fp, "%s", buff) != EOF){
+            //printf("%s \n", buff);
+            //sleep(2);
+            if(strcmp(text, buff) == 0){
+                printf("%s/%s \n", path, sentry->d_name);
+                match = 1;
+                fclose(fp);
+                //return match;
+                break;
+            }
+            //fscanf(fp, "%s", buff);
+        }            
+        free(buff);*/
+    }
+    closedir(dir);
+    return match;
+}
+
 int find_string(char *text, char *flag1, char *flag2){
     //int match = 0;
     // remove quotes from text
@@ -119,6 +170,18 @@ int find_string(char *text, char *flag1, char *flag2){
     }
     else if(strcmp(flag1, "-s") == 0){
         printf("sub flag \n");
+        dir = opendir(".");
+        if(!dir){
+            perror("opendir() failed");
+            return -1;
+        }
+        while((entry = readdir(dir)) != NULL){
+            if(strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0){
+                continue;
+            }
+            match = sub_find_string(text, entry, path, match);
+        }
+        closedir(dir);
     }
     else{ // no flags
         //printf("here \n");
