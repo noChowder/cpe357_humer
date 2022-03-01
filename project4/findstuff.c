@@ -17,7 +17,7 @@ typedef struct Processes{
     int numProcesses;
 }Processes;
 
-int sub_finder(char *file, struct dirent *entry, char *path){
+int sub_finder(char *file, struct dirent *entry, char *path, int match){
     char tempPath[1000];
     DIR *dir;
     dir = opendir(path);
@@ -27,7 +27,7 @@ int sub_finder(char *file, struct dirent *entry, char *path){
         return -1;
     }
     struct dirent *sentry;
-    int match = 0;
+    //int match = 0;
     while((sentry = readdir(dir)) != NULL){
         //printf("%s \n", sentry->d_name);
         if(sentry->d_type == 4 && strcmp(sentry->d_name, ".") != 0 && strcmp(sentry->d_name, "..") != 0){
@@ -36,7 +36,7 @@ int sub_finder(char *file, struct dirent *entry, char *path){
             strcat(tempPath, "/");
             strcat(tempPath, sentry->d_name);
             //printf("here: %s \n", tempPath);
-            match = sub_finder(file, sentry, tempPath);
+            match = sub_finder(file, sentry, tempPath, match);
         }
         if( (strcmp(file, sentry->d_name) == 0) ){
             //printf("here \n");
@@ -66,7 +66,7 @@ int finder(char *file, char *flag){
         while((entry = readdir(dir)) != NULL){
             //printf("%d \t", entry->d_type);
             if(entry->d_type == 4 && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0){
-                match = sub_finder(file, entry, path);
+                match = sub_finder(file, entry, path, match);
             }
         }
         closedir(dir);
@@ -120,35 +120,18 @@ int main(){
         close(fd[1]);
         dup2(save_usrinput, STDIN_FILENO);
         read(STDIN_FILENO, usrinput, 100);
-<<<<<<< HEAD
-        //printf("%s", usrinput);
-        char *args[5];
-        //for(int i = 0; i < 4; i++)
-        //    args[i] = (char *)malloc(20);
-        char *cmds = strtok(usrinput, " ");
-=======
         size_t len = strlen(usrinput);
         char *args[4];
         for(int i = 0; i < 4; i++){
             args[i] = malloc(20 * sizeof(char));
         }
         char *cmds = strtok(usrinput, " \n");
->>>>>>> ada14ade68833d806d861e7c0dcc29cd94756947
         int i = 0;
         while(cmds != NULL){
             if(i == 4){
                 fprintf(stderr, "Too many args, stopping \n");
                 return -1;
             }
-<<<<<<< HEAD
-            args[i++] = cmds;
-            cmds = strtok(NULL, " ");
-        }
-        for(i = 0; i < 4; i++){
-            //printf("%s \n", args[i]);
-        }
-        printf("%s \n", args[1]);
-=======
             strcpy(args[i++], cmds);
             cmds = strtok(NULL, " \n");
         }
@@ -222,7 +205,6 @@ int main(){
             free(args[i]);
         }
         
->>>>>>> ada14ade68833d806d861e7c0dcc29cd94756947
         close(fd[0]);
         waitpid(prompt, &status, 0);
         kill(prompt, SIGKILL);
