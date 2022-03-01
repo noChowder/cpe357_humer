@@ -56,6 +56,7 @@ int finder(char *file, char *flag){
     struct dirent *entry;
     
     /* check subdirectories */
+    printf("Matching file paths: \n");
     if( (strcmp(flag, "-s") == 0) ){
         dir = opendir(".");
         if(!dir){
@@ -71,12 +72,12 @@ int finder(char *file, char *flag){
         closedir(dir);
     }
     else{
+        //printf("here \n");
         dir = opendir(".");
         if(!dir){
             perror("opendir() failed");
             return -1;
         }
-        printf("Matching file paths: \n");
         while((entry = readdir(dir)) != NULL){
             if( (strcmp(file, entry->d_name) == 0) ){
                 printf("%s/%s \n", path, entry->d_name);
@@ -149,11 +150,40 @@ int main(){
             p->tasks[pidSerial-1] = args[1];
             //printf("Child %d is finding %s \n", p->pidSerial, p->tasks[p->pidSerial-1]);
             if(child_pid == 0){
-                if(finder(args[1], args[2]) != 0){
-                    fprintf(stderr, ">nothing found< \n\n");
-                    return -1;
+                /* check 2nd arg for file or string */
+                // if 2nd arg in quotes use diff function
+                // if 2nd arg not in quotes use finder
+                int len = strlen(args[1]);
+                //printf("last char:  %s \n", args[1]+len-1);
+                //printf("first char: %c \n", *args[1]);
+                if( (strcmp(args[1]+len-1, "\"")) == 0 && (*args[1] == '\"') ){
+                    printf("string \n");
+                    // if arg3 is -f
+                    // if arg4 is -s
+                    // if arg3 is -f and arg4 is -s
+                    return 0;
                 }
-                return 0;
+                else{
+                    //printf("%s \n", args[3]);
+                    if(strcmp(args[2], "-s") == 0){
+                        if(finder(args[1], args[2]) != 0){
+                            fprintf(stderr, ">nothing found< \n\n");
+                            return -1;
+                        }
+                    }
+                    else if(strcmp(args[2], "-s") != 0){
+                        //printf("this \n");
+                        if(finder(args[1], args[2]) != 0){
+                            fprintf(stderr, ">nothing found< \n\n");
+                            return -1;
+                        }
+                    }
+                    else{
+                        fprintf(stderr, "Invalid input \n");
+                        return -1;
+                    }
+                    return 0;
+                }
             }
             else{
                 while(1){
