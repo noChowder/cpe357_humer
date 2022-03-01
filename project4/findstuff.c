@@ -17,7 +17,7 @@ typedef struct Processes{
     int numProcesses;
 }Processes;
 
-int sub_finder(char *file, struct dirent *entry, char *path, int match){
+int sub_find_file(char *file, struct dirent *entry, char *path, int match){
     char tempPath[1000];
     DIR *dir;
     dir = opendir(path);
@@ -36,7 +36,7 @@ int sub_finder(char *file, struct dirent *entry, char *path, int match){
             strcat(tempPath, "/");
             strcat(tempPath, sentry->d_name);
             //printf("here: %s \n", tempPath);
-            match = sub_finder(file, sentry, tempPath, match);
+            match = sub_find_file(file, sentry, tempPath, match);
         }
         if( (strcmp(file, sentry->d_name) == 0) ){
             //printf("here \n");
@@ -48,7 +48,7 @@ int sub_finder(char *file, struct dirent *entry, char *path, int match){
     return match;
 }
 
-int finder(char *file, char *flag){
+int find_file(char *file, char *flag){
     char path[1000];
     getcwd(path, 1000);
     DIR *dir;
@@ -66,7 +66,7 @@ int finder(char *file, char *flag){
         while((entry = readdir(dir)) != NULL){
             //printf("%d \t", entry->d_type);
             if(entry->d_type == 4 && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0){
-                match = sub_finder(file, entry, path, match);
+                match = sub_find_file(file, entry, path, match);
             }
         }
         closedir(dir);
@@ -79,6 +79,9 @@ int finder(char *file, char *flag){
             return -1;
         }
         while((entry = readdir(dir)) != NULL){
+            if(strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0){
+                continue;
+            }
             if( (strcmp(file, entry->d_name) == 0) ){
                 printf("%s/%s \n", path, entry->d_name);
                 match = 1;
@@ -96,10 +99,68 @@ int finder(char *file, char *flag){
 }
 
 int find_string(char *text, char *flag1, char *flag2){
+    //int match = 0;
+    // remove quotes from text
+    int len = strlen(text);
+    for(int i = 0; i < len; i++){
+        text[i] = text[i+1];
+    }
+    text[len-2] = '\0';
+    //printf("%s \n", text);
+    char path[1000];
+    getcwd(path, 1000);
+    DIR *dir;
     int match = 0;
+    struct dirent *entry;
+
+    printf("Found text in following paths: \n");
+    if(match == 1){ // check flags
+
+    }
+    else{
+        //printf("here \n");
+        dir = opendir(".");
+        if(!dir){
+            perror("opendir() failed");
+            return -1;
+        }
+        while((entry = readdir(dir)) != NULL){
+            if(strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0){
+                continue;
+            }
+            FILE *fp;
+            //printf("%s \n", entry->d_name);
+            fp = fopen(entry->d_name, "rb");
+            if(!fp){
+                perror("fopen() failed");
+                return -1;
+            }
+            char *buff;
+            buff = malloc(255*sizeof(char));
+            //fscanf(fp, "%s", buff);
+            //printf("%s \n", buff);
+            while(fscanf(fp, "%s", buff) != EOF){
+                //printf("%s \n", buff);
+                //sleep(2);
+                if(strcmp(text, buff) == 0){
+                    printf("%s/%s \n", path, entry->d_name);
+                    match = 1;
+                    fclose(fp);
+                    break;
+                }
+                //fscanf(fp, "%s", buff);
+            }            
+            free(buff);
+            //fclose(fp);
+        }
+        closedir(dir);
+    }
+
     if(match != 1){
         return -1;
     }
+    putchar('\n');
+
     return 0;
 }
 
@@ -151,7 +212,7 @@ int main(){
                 break;
             }
             int pidSerial = p->numProcesses;
-            printf("%d \n", p->numProcesses);
+            //printf("%d \n", p->numProcesses);
             int status;
             int child_pid = fork();
             p->pids[pidSerial-1] = child_pid;
@@ -176,19 +237,25 @@ int main(){
                             return -1;
                         }
                     }
+                    else if(strcmp(args[2], "-s") == 0){
+                        if(find_string(args[1], args[2], args[3]) != 0){
+                            fprintf(stderr, ">nothing found< \n\n");
+                            return -1;
+                        }
+                    }
                     return 0;
                 }
                 else{
                     //printf("%s \n", args[3]);
                     if(strcmp(args[2], "-s") == 0){
-                        if(finder(args[1], args[2]) != 0){
+                        if(find_file(args[1], args[2]) != 0){
                             fprintf(stderr, ">nothing found< \n\n");
                             return -1;
                         }
                     }
                     else if(strcmp(args[2], "-s") != 0){
                         //printf("this \n");
-                        if(finder(args[1], args[2]) != 0){
+                        if(find_file(args[1], args[2]) != 0){
                             fprintf(stderr, ">nothing found< \n\n");
                             return -1;
                         }
@@ -206,12 +273,39 @@ int main(){
                     int ret = waitpid(child_pid, &status, WNOHANG);
                     if(ret > 0){
                         printf("child %d returned \n", p->numProcesses);
-                        //p->numProcesses-=1;
+                        p->numProcesses-=1;
+                        p->pids[pidSerial-1];
+                        p->tasks[pidSerial-1] = NULL;
                         break;
                     }
                 }
                 kill(child_pid, SIGKILL);
                 //return 0;
+            }
+        }
+        else if(strcmp(args[0], "q") == 0 || strcmp(args[0], "quit") == 0){
+            kill(prompt, SIGKILL);
+            for(int i = 0; i < 4; i++){
+                //printf("%s \n", args[i]);
+                free(args[i]);
+            }
+            break;
+        }
+        else if(strcmp(args[0], "list") == 0){
+            printf("Number of active processes: %d \n", p->numProcesses);
+            for(int i = 0; i < 10; i++){
+                if(p->tasks[i] != NULL){
+                    printf("Process %d is finding %s \n", i+1, p->tasks[i]);
+                }
+            }
+        }
+        else if(strcmp(args[0], "kill") == 0){
+            int pidSerial = atoi(args[1]);
+            if(p->tasks[pidSerial-1] != NULL){
+                kill(p->pids[pidSerial-1], SIGKILL);
+                p->numProcesses-=1;
+                p->pids[pidSerial-1] = 0;
+                p->tasks[pidSerial-1] = NULL;
             }
         }
         

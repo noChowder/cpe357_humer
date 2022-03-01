@@ -39,7 +39,7 @@ int main(){
         //printf("%s \n", text);
         close(fd[0]);
         wait(0);
-    }
+    } text
 
     return 0;
 }
