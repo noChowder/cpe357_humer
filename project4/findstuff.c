@@ -34,7 +34,7 @@ int main(){
         dup2(save_usrinput, STDIN_FILENO);
         read(STDIN_FILENO, usrinput, 100);
         //printf("%s", usrinput);
-        char *args[4];
+        char *args[5];
         //for(int i = 0; i < 4; i++)
         //    args[i] = (char *)malloc(20);
         char *cmds = strtok(usrinput, " ");
@@ -45,12 +45,12 @@ int main(){
                 return -1;
             }
             args[i++] = cmds;
-            cmds = strtok(NULL, " \n");
+            cmds = strtok(NULL, " ");
         }
         for(i = 0; i < 4; i++){
-            printf("%s \n", args[i]);
+            //printf("%s \n", args[i]);
         }
-        //printf("%s \n", args[1]);
+        printf("%s \n", args[1]);
         close(fd[0]);
         wait(0);
     }
