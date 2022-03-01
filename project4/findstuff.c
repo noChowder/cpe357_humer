@@ -117,7 +117,7 @@ int find_string(char *text, char *flag1, char *flag2){
     if(match == 1){ // check flags
 
     }
-    else{
+    else{ // no flags
         //printf("here \n");
         dir = opendir(".");
         if(!dir){
@@ -240,6 +240,12 @@ int main(){
                     else if(strcmp(args[2], "-s") == 0){
                         if(find_string(args[1], args[2], args[3]) != 0){
                             fprintf(stderr, ">nothing found< \n\n");
+                            return -1;
+                        }
+                    }
+                    else{
+                        if(find_string(args[1], args[2], args[3]) != 0){
+                            fprintf(stderr, ">nothing found< \n");
                             return -1;
                         }
                     }
