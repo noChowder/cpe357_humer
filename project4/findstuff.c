@@ -114,8 +114,11 @@ int find_string(char *text, char *flag1, char *flag2){
     struct dirent *entry;
 
     printf("Found text in following paths: \n");
-    if(match == 1){ // check flags
-
+    if(*flag1 == '-' && *(flag1+1) == 'f'){ // check flags, go through subdirectories, specific file type
+        printf("flag1 is -f \n");
+    }
+    else if(strcmp(flag1, "-s") == 0){
+        printf("sub flag \n");
     }
     else{ // no flags
         //printf("here \n");
@@ -243,7 +246,7 @@ int main(){
                             return -1;
                         }
                     }
-                    else{
+                    else{ // no flags
                         if(find_string(args[1], args[2], args[3]) != 0){
                             fprintf(stderr, ">nothing found< \n");
                             return -1;
