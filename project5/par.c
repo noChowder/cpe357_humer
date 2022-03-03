@@ -62,6 +62,8 @@ void quadratic_matrix_multiplication(float *A,float *B,float *C){
 /***********************************************************************************
 *************************************/
 void quadratic_matrix_multiplication_parallel(int par_id, int par_count, float *A, float *B, float *C){
+    //make row/id/count
+    int section = MATRIX_DIMENSION_XY / par_id;
 //nullify the result matrix first
     for(int a = 0;a<MATRIX_DIMENSION_XY;a++)
         for(int b = 0;b<MATRIX_DIMENSION_XY;b++)
