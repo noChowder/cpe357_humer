@@ -96,21 +96,7 @@ void synch(int par_id,int par_count,int *ready){
     if(par_count == 1);
     else{
         while(*ready != par_count);
-        //printf("new ready: %d \n", *ready);
-        if(par_id == 0){
-            printf("new ready: %d \n", *ready);
-            while(*ready != 1);{
-                if(*ready == 1){
-                    *ready = 0;
-                }
-            }
-        }
-        else{
-            (*ready) -= 1;
-            printf("new ready: %d \n", *ready);
-            while(*ready != 0);
-        }
-        //printf("new ready: %d \n", *ready);
+        
     }
 }
 //
