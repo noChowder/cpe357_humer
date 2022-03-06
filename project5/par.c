@@ -91,10 +91,8 @@ void quadratic_matrix_multiplication_parallel(int par_id, int par_count, float *
 *************************************/
 void synch(int par_id,int par_count,int *ready){
 //TODO: synch algorithm. make sure, ALL processes get stuck here until all ARE here
-    while(!ready){
-        if(par_id == par_count - 1)
-            *ready = 1;
-    }
+    while(*ready != par_count);
+    *ready = 0;
 }
 //
 /***********************************************************************************
@@ -131,6 +129,7 @@ int main(int argc, char *argv[]){
         B = (float *)mmap(NULL, 100*sizeof(float), PROT_READ | PROT_WRITE, MAP_SHARED, fd[1], 0);
         C = (float *)mmap(NULL, 100*sizeof(float), PROT_READ | PROT_WRITE, MAP_SHARED, fd[2], 0);
         ready = (int *)mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED, fd[3], 0);
+        *ready = 0;
     }
     else{
         //TODO: init the shared memory for A,B,C, ready. shm_open withOUT C_CREAT 
@@ -145,7 +144,7 @@ int main(int argc, char *argv[]){
         ready = (int *)mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED, fd[3], 0);
         sleep(2); //needed for initalizing synch
     }
-    *ready = 0;
+    *ready++;
     synch(par_id,par_count,ready);
     if(par_id==0){
         //TODO: initialize the matrices A and B
@@ -156,14 +155,15 @@ int main(int argc, char *argv[]){
             for(int r = 0;r<MATRIX_DIMENSION_XY;r++)
                 set_matrix_elem(B, c, r, 2.3);
     }
-    *ready = 0;
+    *ready++;
     synch(par_id,par_count,ready);
     //TODO: quadratic_matrix_multiplication_parallel(par_id, par_count,A,B,C, ...);
     quadratic_matrix_multiplication_parallel(par_id, par_count, A, B, C);
+    *ready++;
     synch(par_id,par_count,ready);
     if(par_id==0)
         quadratic_matrix_print(C);
-    *ready = 0;
+    *ready++;
     synch(par_id, par_count, ready);
     //lets test the result:
     float M[MATRIX_DIMENSION_XY * MATRIX_DIMENSION_XY];
