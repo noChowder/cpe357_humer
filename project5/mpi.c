@@ -44,6 +44,7 @@ int main(int argc, char *argv[]){
     }
 
     for(int i = 0; i < atoi(par_count); i++){
+        //printf("free here %d\n", i);
         free(args[i]);
     }
     free(par_id);
