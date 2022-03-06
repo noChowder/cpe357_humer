@@ -31,12 +31,12 @@ int main(int argc, char *argv[]){
         //printf("%s \n", args[2]);
         //printf("%s \n", args[3]);
         if(fork() == 0){
-            printf("here \n");
+            //printf("here \n");
             execv("./par", args);
-            printf("here 2\n");
+            //printf("here 2\n");
         }
         else{
-            printf("here3 \n");
+            //printf("here3 \n");
         }
     }
     wait(0);
