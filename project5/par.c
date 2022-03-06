@@ -92,11 +92,17 @@ void quadratic_matrix_multiplication_parallel(int par_id, int par_count, float *
 void synch(int par_id,int par_count,int *ready){
 //TODO: synch algorithm. make sure, ALL processes get stuck here until all ARE here
     (*ready)++;
-    printf("par_id: %d, ready: %d \n", par_id, *ready);
+    //printf("par_id: %d, ready: %d \n", par_id, *ready);
     if(par_count == 1);
     else{
         while(*ready != par_count);
-        
+        if(par_id == 0){
+            *ready = 0;
+        }
+        else{
+            sleep(2);
+        }
+        //printf("new par_id: %d, ready: %d \n", par_id, *ready);
     }
 }
 //
@@ -154,7 +160,7 @@ int main(int argc, char *argv[]){
         //TODO: initialize the matrices A and B
         for(int c = 0;c<MATRIX_DIMENSION_XY;c++)
             for(int r = 0;r<MATRIX_DIMENSION_XY;r++)
-                set_matrix_elem(A, c, r, 3.2);
+                set_matrix_elem(A, c, r, 3.6);
         for(int c = 0;c<MATRIX_DIMENSION_XY;c++)
             for(int r = 0;r<MATRIX_DIMENSION_XY;r++)
                 set_matrix_elem(B, c, r, 2.3);

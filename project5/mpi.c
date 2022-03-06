@@ -39,8 +39,9 @@ int main(int argc, char *argv[]){
             //printf("here3 \n");
         }
     }
-    wait(0);
-
+    for(int i = 0; i < atoi(par_count); i++){
+        wait(0);
+    }
 
     for(int i = 0; i < atoi(par_count); i++){
         free(args[i]);
