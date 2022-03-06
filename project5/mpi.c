@@ -20,23 +20,26 @@ int main(int argc, char *argv[]){
     sprintf(par_count, "%d", atoi(argv[2]));
     for(int i = 0; i < atoi(par_count); i++){
         sprintf(par_id, "%d", i);
-        printf("%s \n", par_id);
+        //printf("%s \n", par_id);
+        //printf("%d \n", atoi(par_count));
         strcpy(args[0], argv[1]);
         strcpy(args[1], par_id);
         strcpy(args[2], par_count);
-        strcpy(args[3], "NULL");
-        printf("%s \n", args[0]);
-        printf("%s \n", args[1]);
-        printf("%s \n", args[2]);
-        printf("%s \n", args[3]);
-        //if(fork() == 0){
-        //    execv("./par", args);
-        //    return 0;
-        //}
-        //else{
-        //    wait(0);
-        //}
+        args[3] = NULL;
+        //printf("%s \n", args[0]);
+        //printf("%s \n", args[1]);
+        //printf("%s \n", args[2]);
+        //printf("%s \n", args[3]);
+        if(fork() == 0){
+            printf("here \n");
+            execv("./par", args);
+            printf("here 2\n");
+        }
+        else{
+            printf("here3 \n");
+        }
     }
+    wait(0);
 
 
     for(int i = 0; i < atoi(par_count); i++){

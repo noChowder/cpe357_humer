@@ -65,7 +65,7 @@ void quadratic_matrix_multiplication_parallel(int par_id, int par_count, float *
     //make row/id/count
     int rows = MATRIX_DIMENSION_XY / par_count;
     int mod_check = MATRIX_DIMENSION_XY % par_count;
-    printf("%d \n", MATRIX_DIMENSION_XY % par_count);
+    //printf("%d \n", MATRIX_DIMENSION_XY % par_count);
 //nullify the result matrix first
     if(par_id == 0){
         for(int a = 0;a<MATRIX_DIMENSION_XY;a++)
@@ -91,8 +91,21 @@ void quadratic_matrix_multiplication_parallel(int par_id, int par_count, float *
 *************************************/
 void synch(int par_id,int par_count,int *ready){
 //TODO: synch algorithm. make sure, ALL processes get stuck here until all ARE here
-    while(*ready != par_count);
-    *ready = 0;
+    (*ready)++;
+    printf("par_id: %d, ready: %d \n", par_id, *ready);
+    if(par_count == 1);
+    else{
+        while(*ready != par_count);
+        if(par_id == 0){
+            //sleep(2);
+            *ready = 0;
+        }
+        else{
+            //sleep(2);
+        }
+        printf("new ready: %d \n", *ready);
+    }
+    //*ready = 0;
 }
 //
 /***********************************************************************************
@@ -144,7 +157,6 @@ int main(int argc, char *argv[]){
         ready = (int *)mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED, fd[3], 0);
         sleep(2); //needed for initalizing synch
     }
-    *ready++;
     synch(par_id,par_count,ready);
     if(par_id==0){
         //TODO: initialize the matrices A and B
@@ -155,15 +167,15 @@ int main(int argc, char *argv[]){
             for(int r = 0;r<MATRIX_DIMENSION_XY;r++)
                 set_matrix_elem(B, c, r, 2.3);
     }
-    *ready++;
+    //*ready++;
     synch(par_id,par_count,ready);
     //TODO: quadratic_matrix_multiplication_parallel(par_id, par_count,A,B,C, ...);
     quadratic_matrix_multiplication_parallel(par_id, par_count, A, B, C);
-    *ready++;
+    //*ready++;
     synch(par_id,par_count,ready);
     if(par_id==0)
         quadratic_matrix_print(C);
-    *ready++;
+    //*ready++;
     synch(par_id, par_count, ready);
     //lets test the result:
     float M[MATRIX_DIMENSION_XY * MATRIX_DIMENSION_XY];
