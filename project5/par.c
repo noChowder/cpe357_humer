@@ -91,9 +91,18 @@ void quadratic_matrix_multiplication_parallel(int par_id, int par_count, float *
 *************************************/
 void synch(int par_id,int par_count,int *ready){
 //TODO: synch algorithm. make sure, ALL processes get stuck here until all ARE here
-    //printf("par_id: %d, ready: %d \n", par_id, *ready);
+    printf("par_id: %d, ready: %d \n", par_id, *ready);
     if(par_count == 1);
     else{
+        *ready += 1;
+        while(1){
+            if(*ready == par_count){
+                sleep(1);
+                *ready -= 1;
+                break;
+            }
+        }
+        // *ready -= 1;
         // ready[par_id] = 1;
         // int escape = 0;
         // while(1){
@@ -108,27 +117,30 @@ void synch(int par_id,int par_count,int *ready){
         //         ready[par_count];
         //     }
         // }
-        while(1){
-            //if(*ready == par_count - 1){
-            //    break;
-            //}
-            if(par_id == *ready){
-                *ready += 1;
-                break;
-            }
-        }
-        //printf("ready: %d\n", *ready);
-        while(*ready != par_count);
-        while(1){
-            //if(*ready == 0){
-            //    break;
-            //}
-            if(par_id == (*ready)-1){
-                *ready -= 1;
-                //printf("here\n");
-                break;
-            }
-        }
+        // while(1){
+        //     if(*ready == par_count){
+        //        break;
+        //     }
+        //     if(par_id == *ready && *ready != par_count){
+        //         *ready += 1;
+        //         break;
+        //     }
+        // }
+        // //printf("ready: %d\n", *ready);
+        // while(*ready != par_count);
+        // while(1){
+        //     if(*ready == 0){
+        //        break;
+        //     }
+        //     if(par_id == (*ready)-1 && *ready != 0){
+        //         *ready -= 1;
+        //         //printf("here\n");
+        //         break;
+        //     }
+        // }
+        // if(par_id == 0){
+        //     sleep(1);
+        // }
         //printf("new par_id: %d, ready: %d \n", par_id, *ready);
     }
 }
