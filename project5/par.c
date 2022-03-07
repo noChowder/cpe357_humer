@@ -91,17 +91,42 @@ void quadratic_matrix_multiplication_parallel(int par_id, int par_count, float *
 *************************************/
 void synch(int par_id,int par_count,int *ready){
 //TODO: synch algorithm. make sure, ALL processes get stuck here until all ARE here
-    printf("par_id: %d, ready: %d \n", par_id, *ready);
+    //printf("par_id: %d, ready: %d \n", par_id, *ready);
     if(par_count == 1);
     else{
-        *ready += 1;
-        while(1){
-            if(*ready == par_count){
-                sleep(1);
-                *ready -= 1;
+        // *ready += 1;
+        // while(1){
+        //     if(*ready == par_count){
+        //         sleep(4);
+        //         *ready -= 1;
+        //         break;
+        //     }
+        // }
+        // while(1){
+        //     if(*ready == par_id){
+        //         *ready += 1;
+        //         break;
+        //     }
+        // }
+        ready[par_id] = 1;
+        int escape = 1;
+        //printf("par_id: %d, ready: %d \n", par_id, *ready);
+        while(ready[par_id] == 1){
+            for(int i = 0; i < par_count; i++){
+                if(ready[i] == 0){
+                    escape = 0;
+                }
+            }
+            if(escape == 1){
+                for(int j = 0; j < par_count; j++){
+                    ready[j] = 0;
+                }
+                //sleep(2);
                 break;
             }
         }
+
+
         // *ready -= 1;
         // ready[par_id] = 1;
         // int escape = 0;

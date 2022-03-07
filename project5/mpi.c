@@ -43,10 +43,14 @@ int main(int argc, char *argv[]){
         wait(0);
     }
 
-    for(int i = 0; i < atoi(par_count); i++){
-        //printf("free here %d\n", i);
-        free(args[i]);
-    }
+    // for(int i = 0; i < atoi(par_count); i++){
+    //     //printf("free here %d\n", i);
+    //     free(args[i]);
+    // }
+    free(args[0]);
+    free(args[1]);
+    free(args[2]);
+    free(args[3]);
     free(par_id);
     free(par_count);
     return 0;
