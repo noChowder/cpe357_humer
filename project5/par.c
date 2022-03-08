@@ -8,6 +8,7 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <time.h>
 #define MATRIX_DIMENSION_XY 10
 //SEARCH FOR TODO
 //
@@ -98,12 +99,16 @@ void synch(int par_id,int par_count,int *ready){
         int escape = 1;
         //printf("par_id: %d, ready: %d \n", par_id, *ready);
         while(ready[par_id] == 1){
+            if(escape == 1 && ready[par_id] == 0){
+                continue;
+            }
             for(int i = 0; i < par_count; i++){
                 if(ready[i] == 0){
                     escape = 0;
+                    break;
                 }
             }
-            if(escape == 1){
+            if(escape == 1 && ready[par_id] == 1){
                 for(int j = 0; j < par_count; j++){
                     ready[j] = 0;
                 }
@@ -111,6 +116,7 @@ void synch(int par_id,int par_count,int *ready){
                 break;
             }
         }
+        //sleep(1);
     }
 }
 //
