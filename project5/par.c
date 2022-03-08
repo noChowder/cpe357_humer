@@ -95,28 +95,79 @@ void synch(int par_id,int par_count,int *ready){
     //printf("par_id: %d, ready: %d \n", par_id, *ready);
     if(par_count == 1);
     else{
-        ready[par_id] = 1;
+        // ready[par_id] = 1;
+        // int escape = 1;
+        // //printf("par_id: %d, ready: %d \n", par_id, *ready);
+        // while(ready[par_id] == 1){
+        //     if(escape == 1 && ready[par_id] == 0){
+        //         continue;
+        //     }
+        //     for(int i = 0; i < par_count; i++){ // check all
+        //         if(ready[i] == 0){
+        //             escape = 0;
+        //             break;
+        //         }
+        //     }
+        //     if(escape == 1 && ready[par_id] == 1){
+        //         for(int j = 0; j < par_count; j++){
+        //             ready[j] = 0;
+        //         }
+        //         //sleep(2);
+        //         break;
+        //     }
+        // }
+        ready[par_id] += 1;
         int escape = 1;
-        //printf("par_id: %d, ready: %d \n", par_id, *ready);
-        while(ready[par_id] == 1){
-            if(escape == 1 && ready[par_id] == 0){
-                continue;
-            }
+        //printf("par_id: %d, ready: %d \n", par_id, ready[par_id]);
+        while(1){
             for(int i = 0; i < par_count; i++){
-                if(ready[i] == 0){
+                if(ready[par_id] > ready[i] && par_id != i){
+                    // printf("id: %d, ready: %d \n", i, ready[i]);
+                    //printf("par_id: %d, ready: %d \n", par_id, ready[par_id]);
                     escape = 0;
                     break;
                 }
             }
-            if(escape == 1 && ready[par_id] == 1){
-                for(int j = 0; j < par_count; j++){
-                    ready[j] = 0;
+            while(!escape){
+                for(int i = 0; i < par_count; i++){
+                    // printf("par_id: %d, ready: %d \n", par_id, ready[par_id]);
+                    // printf("id: %d, ready: %d \n", i, ready[i]);
+                    if(ready[par_id] < ready[i] && par_id != i){
+                        escape = 1;
+                        break;
+                    }
+                    // else if(ready[par_id] == ready[i] && par_id != i){
+                    //     escape = 1;
+                    //     continue;
+                    // }
                 }
-                //sleep(2);
-                break;
+                if(escape){
+                    break;
+                }
             }
+            if(escape){
+                ready[par_id] += 1;
+                    break;
+                }
         }
-        //sleep(1);
+
+
+        // for(int i = 0; i < par_count; i++){
+        //     while(ready[i] == 0);
+        // }
+        // ready[par_id] = 2;
+        // if(par_id == 0){
+        //     for(int i = 1; i < par_count; i++){
+        //         if(ready[i] != 2){
+        //             break;
+        //         }
+        //         while(ready[par_count-1] == 2);
+        //     }
+        //     ready[0] = 0;
+        // }
+        // else{
+        //     while(ready[0] == 2);
+        // }
     }
 }
 //
@@ -154,7 +205,7 @@ int main(int argc, char *argv[]){
         B = (float *)mmap(NULL, 100*sizeof(float), PROT_READ | PROT_WRITE, MAP_SHARED, fd[1], 0);
         C = (float *)mmap(NULL, 100*sizeof(float), PROT_READ | PROT_WRITE, MAP_SHARED, fd[2], 0);
         ready = (int *)mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED, fd[3], 0);
-        *ready = 0;
+        ready[par_id] = 0;
     }
     else{
         //TODO: init the shared memory for A,B,C, ready. shm_open withOUT C_CREAT 
@@ -167,6 +218,7 @@ int main(int argc, char *argv[]){
         B = (float *)mmap(NULL, 100*sizeof(float), PROT_READ | PROT_WRITE, MAP_SHARED, fd[1], 0);
         C = (float *)mmap(NULL, 100*sizeof(float), PROT_READ | PROT_WRITE, MAP_SHARED, fd[2], 0);
         ready = (int *)mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED, fd[3], 0);
+        ready[par_id] = 0;
         //*ready = 0;
         sleep(2); //needed for initalizing synch
     }
@@ -199,8 +251,10 @@ int main(int argc, char *argv[]){
     //lets test the result:
     float M[MATRIX_DIMENSION_XY * MATRIX_DIMENSION_XY];
     quadratic_matrix_multiplication(A, B, M);
-    if (quadratic_matrix_compare(C, M))
+    if (quadratic_matrix_compare(C, M)){
         printf("full points!\n");
+        // printf("id: %d \n", par_id);
+    }
     else
         printf("buuug!\n");
     close(fd[0]);
