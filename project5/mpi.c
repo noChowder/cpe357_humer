@@ -68,6 +68,10 @@ int main(int argc, char *argv[]){
     *tm = *localtime(&T);
     min_diff = abs(tm->tm_min - old_min);
     sec_diff = abs(tm->tm_sec - old_sec);
+    if(min_diff > 1 && old_sec > tm->tm_sec){
+        min_diff -= 1;
+        sec_diff = tm->tm_sec + (60 - old_sec);
+    }
     printf("Time elapsed: %d min & %d sec \n", min_diff, sec_diff);
 
     free(args[0]);
