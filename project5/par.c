@@ -94,20 +94,6 @@ void synch(int par_id,int par_count,int *ready){
     //printf("par_id: %d, ready: %d \n", par_id, *ready);
     if(par_count == 1);
     else{
-        // *ready += 1;
-        // while(1){
-        //     if(*ready == par_count){
-        //         sleep(4);
-        //         *ready -= 1;
-        //         break;
-        //     }
-        // }
-        // while(1){
-        //     if(*ready == par_id){
-        //         *ready += 1;
-        //         break;
-        //     }
-        // }
         ready[par_id] = 1;
         int escape = 1;
         //printf("par_id: %d, ready: %d \n", par_id, *ready);
@@ -125,48 +111,6 @@ void synch(int par_id,int par_count,int *ready){
                 break;
             }
         }
-
-
-        // *ready -= 1;
-        // ready[par_id] = 1;
-        // int escape = 0;
-        // while(1){
-        //     escape = 1;
-        //     for(int i = 0; i < par_count; i++){
-        //         if(ready[i] == 0){
-        //             escape = 0;
-        //             break;
-        //         }
-        //     }
-        //     if(escape == 1){
-        //         ready[par_count];
-        //     }
-        // }
-        // while(1){
-        //     if(*ready == par_count){
-        //        break;
-        //     }
-        //     if(par_id == *ready && *ready != par_count){
-        //         *ready += 1;
-        //         break;
-        //     }
-        // }
-        // //printf("ready: %d\n", *ready);
-        // while(*ready != par_count);
-        // while(1){
-        //     if(*ready == 0){
-        //        break;
-        //     }
-        //     if(par_id == (*ready)-1 && *ready != 0){
-        //         *ready -= 1;
-        //         //printf("here\n");
-        //         break;
-        //     }
-        // }
-        // if(par_id == 0){
-        //     sleep(1);
-        // }
-        //printf("new par_id: %d, ready: %d \n", par_id, *ready);
     }
 }
 //
@@ -227,10 +171,10 @@ int main(int argc, char *argv[]){
         //TODO: initialize the matrices A and B
         for(int c = 0;c<MATRIX_DIMENSION_XY;c++)
             for(int r = 0;r<MATRIX_DIMENSION_XY;r++)
-                set_matrix_elem(A, c, r, 3.6);
+                set_matrix_elem(A, c, r, 2);
         for(int c = 0;c<MATRIX_DIMENSION_XY;c++)
             for(int r = 0;r<MATRIX_DIMENSION_XY;r++)
-                set_matrix_elem(B, c, r, 2.3);
+                set_matrix_elem(B, c, r, 3);
     }
     //*ready++;
     //printf("par_id: %d, ready: %d \n", par_id, *ready);
