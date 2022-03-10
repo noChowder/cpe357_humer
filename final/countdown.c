@@ -13,4 +13,16 @@
 
 int main(int argc, char *argv[]){
     float time2launch = atof(argv[1]);
+    time2launch *= 2;
+
+    while(time2launch > 0){
+        for(int i = 0; i < time2launch; i++){
+            printf(".");
+        }
+        time2launch -= 1;
+        printf("\n");
+        usleep(500000);
+    }
+
+    return 0;
 }
