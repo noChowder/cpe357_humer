@@ -55,6 +55,34 @@ void sort(int *iap, int arr_size){
     }
 }
 
+void parallel_sort(int *iap, int arr_size, int i, int processes){
+    if(i < processes-1){
+        arr_size++;
+    }
+    while(!check_sorted(iap, arr_size)){
+        if((arr_size % 2) == 0){ // array size is even
+            for(int i = 0; i < arr_size-1; i+=2){ // odd phase
+                if(compare(*(iap+i), *(iap+i+1)))
+                    swap(iap, i, i+1);
+            }
+            for(int i = 1; i < arr_size-2; i+=2){ // even phase
+                if(compare(*(iap+i), *(iap+i+1)))
+                    swap(iap, i, i+1);
+            }
+        }
+        else if((arr_size % 2) != 0){ // array size is odd
+            for(int i = 0; i < arr_size-2; i+=2){ // odd phase
+                if(compare(*(iap+i), *(iap+i+1)))
+                    swap(iap, i, i+1);
+            }
+            for(int i = 1; i < arr_size-1; i+=2){ // even phase
+                if(compare(*(iap+i), *(iap+i+1)))
+                    swap(iap, i, i+1);
+            }
+        }
+    }
+}
+
 void main(int argc, char *argv[]){
     /* set the integer array */
     char c;
@@ -78,7 +106,7 @@ void main(int argc, char *argv[]){
     /* start timer */
     time_t start, end;
     double time_elapsed;
-    start = clock();
+    start = time(NULL);
 
     /* fork */
     int processes = atoi(argv[1]);
@@ -107,38 +135,44 @@ void main(int argc, char *argv[]){
         }
         if(processes < processes_old)
             printf("Too many processes, truncated to %d processes. \n", processes);
+        fflush(stdout);
         int size_split = arr_size / processes;
+        // printf("%d \n", size_split);
         int arr_index;
         for(int i = 0; i < processes; i++){
             arr_index = i * size_split;
-            // if( (arr_size % 2) != 0 && i == (processes-1) ) // last process does remainder for odd splits
-            //     size_split++;
-            if(i != (processes-1)){
-                size_split++;
+            if( i == (processes-1) ){ // last process does remainder for odd splits
+                size_split += arr_size % processes;
             }
+            // if(i != (processes-1)){
+            //     size_split++;
+            // }
             if(fork() == 0){
                 while(!check_sorted(iap, arr_size)){
-                    printf("%d \n", i);
-                    sort(iap+arr_index, size_split);
-                    printf("Sorted Array: \t[");
-                    for(int i = 0; i < arr_size-1; i++){
-                        printf(" %d,", *(iap+i));
-                    }
-                    printf(" %d ]\n", *(iap+arr_size-1));
+                    // printf("sorting\n");
+                    parallel_sort(iap+arr_index, size_split, i, processes);
+                    // printf("Sorted Array: \t[");
+                    // for(int i = 0; i < arr_size-1; i++){
+                    //     printf(" %d,", *(iap+i));
+                    // }
+                    // printf(" %d ]\n", *(iap+arr_size-1));
                 }
                 exit(0);
             }
         }
     }
+    // sort(iap, arr_size);
 
     /* end timer */
     for(int i = 1; i < processes; i++){
         wait(0);
     }
-    end = clock();
-    time_elapsed = ((double)(end - start)) / CLOCKS_PER_SEC;
+    // sleep(3);
+    end = time(NULL);
+    time_elapsed = ((double)(end - start));
 
     /* print all */
+    fflush(stdout);
     printf("Initial Array: \t[");
     for(int i = 0; i < arr_size-1; i++){
         printf(" %d,", int_arr[i]);
