@@ -3,3 +3,5 @@
 Cal Poly, SLO\
 CPE357, Winter 2022\
 labs and projects in C
+
+midterm: bin to bmp file de/compression
